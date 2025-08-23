@@ -1,0 +1,30 @@
+<!-- public/index.html -->
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Banco de Tiempo — Ingresar</title>
+  <style>body{font-family:system-ui;margin:0;background:#0b0c10;color:#eaeaea}
+  main{max-width:420px;margin:8vh auto;padding:1rem}
+  form{background:#14161b;border:1px solid #242832;border-radius:12px;padding:1rem}
+  input,button{width:100%;padding:.7rem;border-radius:8px;border:1px solid #2a2f3a;background:#0f1116;color:#eaeaea}
+  button{border:0;background:#5c7cfa;margin-top:.6rem;cursor:pointer}
+  .ghost{background:transparent;border:1px solid #39414f}
+  #msg{min-height:1.2em;color:#9aa5b1;margin-top:.4rem}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>⏳ Banco de Tiempo</h1>
+    <form id="loginForm" autocomplete="on">
+      <input id="email" type="email" placeholder="email" required />
+      <input id="password" type="password" placeholder="password" required />
+      <button id="loginBtn" type="submit">Entrar</button>
+      <button id="registerBtn" type="button" class="ghost">Crear cuenta</button>
+      <div id="msg"></div>
+    </form>
+  </main>
+<script type="module" src="../src/index.js"></script>
+</body>
+</html>
