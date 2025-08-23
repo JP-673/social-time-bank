@@ -1,26 +1,25 @@
-<!-- public/dashboard.html -->
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Banco de Tiempo — Dashboard</title>
-  <style>
-    :root{font-family:system-ui}
-    body{margin:0;background:#0b0c10;color:#eaeaea}
-    main{max-width:760px;margin:2rem auto;padding:1rem}
-    header.app{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
-    small.muted{color:#9aa5b1}
-    /* …reusa tus estilos de tabs y cards… */
-  </style>
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <main>
     <header class="app">
-      <strong>⏳ Banco de Tiempo</strong>
-      <div>
-        <span id="userName">—</span> <small id="userHood" class="muted"></small>
-        · <button id="logoutBtn" class="ghost" type="button">Salir</button>
+      <div class="brand">
+        <span class="logo">⏳</span>
+        <strong>Banco de Tiempo</strong>
+      </div>
+      <div class="profile">
+        <div class="who">
+          <span id="userName">—</span>
+          <small id="userHood" class="muted"></small>
+        </div>
+        <div class="chip"><span id="hdrBalance">0</span> h</div>
+        <button id="logoutBtn" class="btn ghost" type="button">Salir</button>
       </div>
     </header>
 
@@ -33,20 +32,35 @@
         <button class="tab" data-tab="orders">Gestionar órdenes</button>
         <button class="tab" data-tab="wallet">Billetera</button>
       </nav>
+
       <div class="tabpanes">
         <div id="pane-active"></div>
         <div id="pane-mine" hidden></div>
         <div id="pane-exchanges" hidden></div>
-        <div id="pane-create" hidden> <!-- tu form --> </div>
+        <div id="pane-create" hidden>
+          <h3>Crear oferta</h3>
+          <div class="row">
+            <input id="title" type="text" placeholder="título" />
+            <input id="minutes" type="number" min="5" step="5" placeholder="minutos" />
+          </div>
+          <div class="row">
+            <input id="category" type="text" placeholder="categoría (opcional)" />
+            <input id="location" type="text" placeholder="ubicación/pista (opcional)" />
+          </div>
+          <textarea id="desc" rows="2" placeholder="descripción"></textarea>
+          <button id="offerBtn" class="btn primary" type="button">Publicar</button>
+        </div>
         <div id="pane-orders" hidden></div>
         <div id="pane-wallet" hidden>
-          <h3>Saldo: <span id="hdrBalance">0</span> h</h3>
+          <h3>Saldo: <span id="walletBalance">0</span> h</h3>
           <div id="ledgerList"></div>
         </div>
       </div>
     </section>
   </main>
+
   <div id="toast" aria-live="polite"></div>
-<script type="module" src="./src/dashboard.js"></script>
+  <!-- ENTRY POINT del dashboard (ruta RELATIVA dentro de docs) -->
+  <script type="module" src="./src/dashboard.js"></script>
 </body>
 </html>
