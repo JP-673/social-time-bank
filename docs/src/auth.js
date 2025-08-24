@@ -11,12 +11,19 @@ function deriveDisplayName(email) {
               .map(s => s.charAt(0).toUpperCase() + s.slice(1))
               .join(' ');
 }
-function buildRedirect() {
 
-  const base = location.pathname.replace(/(index|entrar)\.html?$/i, '');
-  return `${location.origin}${base}dashboard.html`;
+// Construye URL a tablero.html respetando subcarpetas (p.ej. /docs/)
+function dashboardURL() {
+  const base = location.pathname.replace(/(index|entrar|login|ingresar)\.html?$/i, '');
+  return new URL(base + 'tablero.html', location.origin).href;
 }
-
+function goToDashboard() {
+  // limpia “/?” si quedó colgado
+  if (location.search === '?') {
+    history.replaceState(null, '', location.pathname);
+  }
+  location.replace(dashboardURL());
+}
 
 /* ---------------- profiles helpers ---------------- */
 async function upsertProfileRow({ id, email, display_name }) {
@@ -54,6 +61,9 @@ export async function signIn(email, password) {
 
   await refreshUser();
   setState({ isLoading: false });
+
+  // 🔥 siempre al tablero tras iniciar sesión
+  goToDashboard();
   return data;
 }
 
@@ -74,19 +84,19 @@ export async function register(email, password, displayNameOrMeta = {}) {
   }
   if (!meta.display_name) meta.display_name = deriveDisplayName(email);
 
-  // 1) alta en Auth con metadata OBJETO
+  // Alta en Auth con metadata OBJETO y redirect al tablero
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: meta,                               // <- objeto, no stringify
-      emailRedirectTo: buildRedirect()
+      data: meta,
+      emailRedirectTo: dashboardURL()
     }
   });
   console.log('[auth] signUp', { data, error });
   if (error) { setState({ isLoading: false }); throw error; }
 
-  // 2) crear/actualizar fila en profiles (para joins con hoods)
+  // Crear/actualizar fila en profiles
   try {
     if (data.user) {
       await upsertProfileRow({
@@ -108,13 +118,13 @@ export async function updateDisplayName(displayName) {
   const clean = (displayName || '').trim();
   if (!clean) throw new Error('display_name vacío');
 
-  // actualiza metadata de auth (para que quede sincronizado)
+  // auth metadata
   const { data: udata, error: uerr } = await supabase.auth.updateUser({
     data: { display_name: clean }
   });
   if (uerr) throw uerr;
 
-  // asegura profiles
+  // profiles
   const user = udata?.user;
   if (user) await upsertProfileRow({ id: user.id, email: user.email, display_name: clean });
   return clean;
@@ -138,7 +148,7 @@ export async function refreshUser() {
   return user;
 }
 
-// Handy: algunos módulos prefieren obtener el user directo
+// Handy
 export async function getCurrentUser() {
   const { data, error } = await supabase.auth.getUser();
   if (error) { console.warn('[auth] getUser error', error); return null; }
@@ -156,13 +166,17 @@ export function listenAuth() {
     const user = session?.user ?? null;
     setState({ currentUser: user });
 
-    // cada vez que se confirme sesión o se actualice el user, sincronizamos profile
+    // Sincroniza perfil cuando corresponde
     if (user && (ev === 'SIGNED_IN' || ev === 'USER_UPDATED')) {
       try {
         const dn = user.user_metadata?.display_name || deriveDisplayName(user.email);
         await upsertProfileRow({ id: user.id, email: user.email, display_name: dn });
       } catch (e) {
         console.warn('[auth] ensure profile on event', e);
+      }
+      // Si estamos en index/entrar, saltamos al tablero
+      if (/(index|entrar|login|ingresar)\.html?$/i.test(location.pathname) || /\/$/.test(location.pathname)) {
+        goToDashboard();
       }
     }
   });
