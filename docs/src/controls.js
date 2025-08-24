@@ -3,7 +3,9 @@ import { logout } from './auth.js';
 import * as Offers from './offers.js';
 import * as Exchanges from './exchanges.js';
 import { getCurrentUser, refreshUser } from './auth.js';
-import { initDashboard } from './dashboard.js';
+import { initDashboard,showTab } from './dashboard.js';
+
+
 
 const $ = s => document.querySelector(s);
 
