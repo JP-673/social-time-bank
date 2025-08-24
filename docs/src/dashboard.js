@@ -1,21 +1,23 @@
 // docs/src/dashboard.js
 import { listenAuth, refreshUser, logout } from './auth.js';
 import { bootUI } from './ui.js';
-import * as Profiles from './profile.js';      // getProfileWithHood()
+import * as Profiles from './profile.js';
 import { setState } from './state.js';
 import { getBalance, getLedger } from './wallet.js';
 
 // -------- utils --------
-const $ = (idA, idB=null) => document.getElementById(idA) || (idB ? document.getElementById(idB) : null);
+const $ = (idA, idB = null) =>
+  document.getElementById(idA) || (idB ? document.getElementById(idB) : null);
 const gotoLanding = () => location.replace('index.html');
-const escapeHtml = (s='') => s.replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
-const fmtH = (mins=0) => (mins/60).toFixed(2) + ' h';
+const escapeHtml = (s = '') =>
+  s.replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+const fmtH = (mins = 0) => (mins / 60).toFixed(2) + ' h';
 
 // -------- sidebar renderers --------
 async function renderSidebarProfile(user) {
-  const $name = $('sbUserName','userName');
-  const $hood = $('sbUserHood','userHood');
-  const $bal  = $('sbHdrBalance','hdrBalance');
+  const $name = $('sbUserName', 'userName');
+  const $hood = $('sbUserHood', 'userHood');
+  const $bal  = $('sbHdrBalance', 'hdrBalance');
 
   try {
     const prof = await Profiles.getProfileWithHood(); // { display_name, hood:{ name } }
@@ -26,14 +28,15 @@ async function renderSidebarProfile(user) {
     if ($hood) $hood.textContent = '';
   }
 
-try {
-  const balHrs = (balMin ?? 0) / 60;
-  const balFmt = balHrs % 1 === 0 ? balHrs.toFixed(0) : balHrs.toFixed(2);
-  if ($bal) $bal.textContent = balFmt;
-} catch {
-  if ($bal) $bal.textContent = 0;
+  try {
+    const balMin = await getBalance(user.id);             // minutos
+    const balHrs = (balMin ?? 0) / 60;
+    const balFmt = balHrs % 1 === 0 ? balHrs.toFixed(0) : balHrs.toFixed(2); // solo número
+    if ($bal) $bal.textContent = balFmt;                  // el " h" lo pone el HTML
+  } catch {
+    if ($bal) $bal.textContent = 0;
+  }
 }
-
 
 async function renderMiniLedger(user) {
   const wrap = $('miniLedger');
@@ -61,18 +64,20 @@ async function renderMiniLedger(user) {
 
 // -------- wiring --------
 function wireSidebarLogout() {
-  const btn = $('sbLogoutBtn','logoutBtn');
+  const btn = $('sbLogoutBtn', 'logoutBtn');
   btn?.addEventListener('click', async () => {
     await logout();
     setState({ currentUser: null });
     gotoLanding();
-  }, { once:true });
+  }, { once: true });
 }
 
 function wireQuickActions() {
   document.querySelectorAll('.quick-actions [data-tab]').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelector(`.tabs .tab[data-tab="${btn.dataset.tab}"]`)?.click();
+      document
+        .querySelector(`.tabs .tab[data-tab="${btn.dataset.tab}"]`)
+        ?.click();
     });
   });
 }
@@ -94,4 +99,4 @@ async function guard() {
 window.addEventListener('DOMContentLoaded', async () => {
   const user = await guard();
   if (user) bootUI(); // enciende tabs/renderers
-};
+});
