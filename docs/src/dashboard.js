@@ -26,13 +26,14 @@ async function renderSidebarProfile(user) {
     if ($hood) $hood.textContent = '';
   }
 
-  try {
-    const bal = await getBalance(user.id); // asume minutos; ajusta si tu API ya devuelve horas
-    if ($bal) $bal.textContent = bal ?? 0;
-  } catch {
-    if ($bal) $bal.textContent = 0;
-  }
+try {
+  const balHrs = (balMin ?? 0) / 60;
+  const balFmt = balHrs % 1 === 0 ? balHrs.toFixed(0) : balHrs.toFixed(2);
+  if ($bal) $bal.textContent = balFmt;
+} catch {
+  if ($bal) $bal.textContent = 0;
 }
+
 
 async function renderMiniLedger(user) {
   const wrap = $('miniLedger');
