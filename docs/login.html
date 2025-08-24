@@ -7,21 +7,31 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <main>
+  <main class="auth card">
     <h1>⏳ Banco de Tiempo</h1>
+    <h2>Ingresar</h2>
 
-    <form id="loginForm" autocomplete="on" action="#">
-      <input id="loginEmail" type="email" placeholder="Correo" required />
-      <input id="loginPassword" type="password" placeholder="Contraseña" required />
-      <button id="loginBtn" type="submit">Entrar</button>
-      <div id="msgLogin" class="muted" aria-live="polite"></div>
+    <form id="loginForm" autocomplete="on" action="javascript:void(0)">
+      <label class="field">
+        <span>Correo</span>
+        <input id="loginEmail" type="email" placeholder="tu@correo.com" required />
+      </label>
+
+      <label class="field">
+        <span>Contraseña</span>
+        <input id="loginPassword" type="password" placeholder="Contraseña" required />
+      </label>
+
+      <button id="loginBtn" type="submit" class="btn primary">Entrar</button>
+      <div id="msgLogin" class="muted" style="margin-top:.5rem"></div>
     </form>
+
+    <p style="margin-top:1rem">
+      ¿No tenés cuenta? <a href="./register.html">Crear cuenta</a>
+    </p>
   </main>
 
   <!-- Punto de entrada -->
-  <script type="module">
-    console.log('[HTML] login.html cargado');
-  </script>
   <script type="module" src="./src/index.js"></script>
 </body>
 </html>

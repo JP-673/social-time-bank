@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Banco de Tiempo — Crear cuenta</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="auth card">
+    <h1>⏳ Banco de Tiempo</h1>
+    <h2>Crear cuenta</h2>
+
+    <form id="registerForm" action="javascript:void(0)" autocomplete="on">
+      <label class="field">
+        <span>Nombre a mostrar</span>
+        <input id="displayName" name="displayName" type="text" placeholder="Tu alias público" minlength="2" maxlength="60">
+      </label>
+
+      <label class="field">
+        <span>Correo *</span>
+        <input id="regEmail" name="email" type="email" placeholder="tu@correo.com" required autocomplete="email">
+      </label>
+
+      <label class="field">
+        <span>Contraseña *</span>
+        <input id="regPassword" name="password" type="password" placeholder="Mínimo 8 caracteres" minlength="8" required autocomplete="new-password">
+      </label>
+
+      <label class="field">
+        <span>Repetir contraseña *</span>
+        <input id="regPassword2" name="password2" type="password" placeholder="Repite tu contraseña" minlength="8" required autocomplete="new-password">
+      </label>
+
+      <label class="field">
+        <span>Barrio (opcional)</span>
+        <select id="hoodSelect" name="hood">
+          <option value="">— Elegí tu barrio —</option>
+        </select>
+      </label>
+
+      <button id="registerBtn" class="btn primary" type="submit">Crear cuenta</button>
+      <div id="msgRegister" class="muted" aria-live="polite" style="margin-top:.5rem"></div>
+    </form>
+
+    <p style="margin-top:1rem">
+      ¿Ya tenés cuenta? <a href="./login.html">Ingresar</a>
+    </p>
+  </main>
+
+  <script type="module" src="./src/register.js"></script>
+</body>
+</html>
