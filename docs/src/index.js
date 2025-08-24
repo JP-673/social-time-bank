@@ -54,18 +54,41 @@ function buildRedirect() {
   return `${location.origin}${base}dashboard.html`;
 }
 
+/** URL absoluta al dashboard respetando subcarpetas (GH Pages). */
+function buildRedirect() {
+  // location.pathname = /social-time-bank/entrar.html  (o /index.html)
+  const base = location.pathname.replace(/(?:index|entrar)\.html?$/i, '');
+  return `${location.origin}${base}dashboard.html`;
+}
+
+/** Lee el valor del primer input que exista según una lista de IDs. */
+function readInput(ids) {
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    if (el && typeof el.value === 'string') return el.value;
+  }
+  return '';
+}
+
+/** Muestra mensajes si existe el elemento. */
+function showMsg(id, t='') {
+  const el = document.getElementById(id);
+  if (el) el.textContent = t;
+}
+
 /** Wirea el login aunque cambien IDs (usa varias alternativas). */
 function wireLogin() {
+  // ⚠️ IMPORTANTE: no uses tu $ = getElementById para selectores CSS.
   const form =
-    $('#loginForm') ||
-    $('[data-role="login-form"]') ||
-    $('form[action*="login"]') ||
-    $('form#entrar') ||
-    $('form'); // último recurso
+    document.querySelector('#loginForm') ||
+    document.querySelector('[data-role="login-form"]') ||
+    document.querySelector('form[action*="login"]') ||
+    document.querySelector('form#entrar') ||
+    document.querySelector('form'); // último recurso
 
   if (!form) return;
 
-  // Evita que un action="" genere "?"
+  // Evita que el form meta "?" si por algo se dispara submit nativo
   try { form.setAttribute('action', ''); } catch {}
 
   form.addEventListener('submit', async (e) => {
@@ -81,22 +104,33 @@ function wireLogin() {
     }
 
     try {
-      const { error } = await signIn(email, pass); // tu auth con Supabase
+      // tu signIn(email, pass) debe hacer supabase.auth.signInWithPassword(...)
+      const { error } = await signIn(email, pass);
       if (error) throw error;
 
-      // Asegura que la sesión esté asentada antes de navegar
-      await (window.supabase?.auth?.getSession?.() ?? Promise.resolve());
+      // Asegura que la sesión quede asentada antes de navegar
+      if (window.supabase?.auth?.getSession) {
+        const { data, error: se } = await window.supabase.auth.getSession();
+        if (se) console.warn('getSession warn:', se);
+        console.log('SESSION OK', !!data?.session);
+      }
 
-      // Redirección limpia y absoluta (sin "?")
-      window.location.assign(buildRedirect());
+      // Redirección limpia y absoluta
+      const url = buildRedirect();
+      console.log('REDIRIGIENDO A:', url);
+      window.location.replace(url); // reemplaza historial y evita volver a entrar.html
     } catch (err) {
+      console.error('SIGNIN ERROR', err);
       showMsg('msgLogin', err?.message || 'No se pudo iniciar sesión.');
       showMsg('msg', err?.message || 'Error'); // compat
     }
   });
 }
 
-/* (Opcional) Limpia "?" huérfano si alguien lo metió antes */
+/* Llama a wireLogin al cargar */
+document.addEventListener('DOMContentLoaded', wireLogin);
+
+/* (Opcional) Si alguien ensució la URL con "?" vacío, limpiá. */
 if (location.search === '?') {
   history.replaceState({}, '', location.pathname);
 }
