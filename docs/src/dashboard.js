@@ -22,6 +22,12 @@ const gotoLanding = () => location.replace(buildPath('login.html'));
 
 const $ = (id, alt) => document.getElementById(id) || (alt ? document.getElementById(alt) : null);
 
+// ✅ FALTABAN ESTAS DOS:
+const escapeHtml = (s = '') =>
+  s.replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+const fmtH = (mins = 0) => (mins / 60).toFixed(2) + ' h';
+
+
 // ===============================
 // SIDEBAR
 // ===============================
@@ -139,7 +145,9 @@ function scrollMessagesToEnd() {
 
 async function loadConversationsList(meId) {
   const list = await Chat.listConversationsWithProfiles();
-  $('chat-conversations').innerHTML = list.map(c => renderConversationItem(c, meId)).join('');
+  const cont = $('chat-conversations');
+  if (!cont) return; // ✅ evita crash si el panel no está en el DOM
+  cont.innerHTML = list.map(c => renderConversationItem(c, meId)).join('');
   document.querySelectorAll('.chat-conversations .item').forEach(el=>{
     el.addEventListener('click', () => openConversation(el.dataset.cid));
   });
@@ -149,6 +157,7 @@ async function loadConversationsList(meId) {
     if (spot) spot.textContent = n > 0 ? `${n} nuevo${n>1?'s':''}` : '';
   }
 }
+
 
 async function openConversation(cid) {
   const me = await refreshUser();
@@ -224,7 +233,14 @@ function wireGlobalContactButtons() {
 // ===============================
 async function guard() {
   listenAuth();
-  const user = await refreshUser();
+  let user = await refreshUser();
+
+  // ✅ retry suave por si la sesión aún no llegó
+  if (!user) {
+    await new Promise(r => setTimeout(r, 120));
+    user = await refreshUser();
+  }
+
   if (!user) { gotoLanding(); return null; }
 
   await renderSidebarProfile(user);
@@ -234,6 +250,7 @@ async function guard() {
 
   return user;
 }
+
 
 window.addEventListener('DOMContentLoaded', async () => {
   const user = await guard();
