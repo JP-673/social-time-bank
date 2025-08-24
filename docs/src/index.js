@@ -156,7 +156,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   const { pathname } = location;
   const onEntrar = pathname.endsWith('/entrar.html') || pathname.endsWith('entrar.html');
   const user = await refreshUser();
+  console.log('User from refreshUser:', user, 'Path:', pathname);
   if (user && (onEntrar || pathname.endsWith('/index.html') || pathname.endsWith('/'))) {
+    console.log('Redirecting to dashboard.html');
     toDash();
     return;
   }
