@@ -48,10 +48,12 @@ function wireLogin() {
       const { error } = await signIn(email, pass);
       if (error) throw error;
 
-      // Redirect to dashboard after successful login
+      // LOG IMPORTANTE:
+      console.log('Login OK, redirigiendo a:', buildRedirect());
       window.location.replace(buildRedirect());
     } catch (err) {
       showMsg('msgLogin', err?.message || 'No se pudo iniciar sesión.');
+      console.error('Error de login:', err);
     }
   });
 }
