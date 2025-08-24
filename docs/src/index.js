@@ -48,21 +48,29 @@ async function loadHoodsIntoSelect() {
   }
 }
 
+/** Redirige siempre a /dashboard.html respetando subcarpetas (GH Pages). */
+function buildRedirect() {
+  const base = location.pathname.replace(/(index|entrar)\.html?$/i, '');
+  return `${location.origin}${base}dashboard.html`;
+}
+
 /** Wirea el login aunque cambien IDs (usa varias alternativas). */
 function wireLogin() {
-  // intenta encontrar un form de login por ID o por data-role o por botón submit dentro
   const form =
     $('#loginForm') ||
     $('[data-role="login-form"]') ||
     $('form[action*="login"]') ||
     $('form#entrar') ||
-    $('form'); // último recurso si solo hay un form en entrar.html
+    $('form'); // último recurso
 
   if (!form) return;
 
+  // Evita que un action="" genere "?"
+  try { form.setAttribute('action', ''); } catch {}
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    showMsg('msgLogin','Ingresando…');
+    showMsg('msgLogin', 'Ingresando…');
 
     const email = readInput(['loginEmail','email','user','correo']).trim();
     const pass  = readInput(['loginPassword','password','pass','clave']);
@@ -71,16 +79,28 @@ function wireLogin() {
       showMsg('msgLogin','Completá email y contraseña.');
       return;
     }
+
     try {
-      const { error } = await signIn(email, pass);
+      const { error } = await signIn(email, pass); // tu auth con Supabase
       if (error) throw error;
-      toDash();
+
+      // Asegura que la sesión esté asentada antes de navegar
+      await (window.supabase?.auth?.getSession?.() ?? Promise.resolve());
+
+      // Redirección limpia y absoluta (sin "?")
+      window.location.assign(buildRedirect());
     } catch (err) {
       showMsg('msgLogin', err?.message || 'No se pudo iniciar sesión.');
       showMsg('msg', err?.message || 'Error'); // compat
     }
   });
 }
+
+/* (Opcional) Limpia "?" huérfano si alguien lo metió antes */
+if (location.search === '?') {
+  history.replaceState({}, '', location.pathname);
+}
+
 
 /** Wirea el registro si existe (en mismo HTML o separado). */
 function wireRegister() {
