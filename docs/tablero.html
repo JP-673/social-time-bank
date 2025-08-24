@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Banco de Tiempo — Dashboard</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="wrap between">
+      <!-- izquierda -->
+      <div class="brand">
+        <span class="logo">⏳</span>
+        <strong>Banco de Tiempo</strong>
+      </div>
+      <!-- derecha -->
+      <div class="userbar">
+        <div class="who">
+          <span id="userName">—</span>
+          <small id="userHood" class="muted"></small>
+        </div>
+        <span class="chip"><span id="hdrBalance">0</span> h</span>
+        <button id="logoutBtn" class="btn ghost" type="button">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Sidebar -->
+<aside class="sidebar card">
+  <!-- PERFIL -->
+  <div class="who">
+    <strong id="sbUserName">—</strong>
+    <small id="sbUserHood" class="muted"></small>
+  </div>
+
+  <!-- SALDO + SALIR -->
+  <div class="balance-row">
+    <span class="chip"><span id="sbHdrBalance">0</span> h</span>
+  </div>
+
+  <!-- MOVIMIENTOS -->
+  <div class="mini-ledger">
+    <h4 class="muted">Movimientos</h4>
+    <div id="miniLedger" class="list"></div>
+  </div>
+</aside>
+
+
+    <!-- Contenido principal -->
+    <section class="content card">
+      <nav class="tabs" role="tablist" aria-label="Secciones del dashboard">
+        <button class="tab is-active" data-tab="active"    role="tab" aria-selected="true"  aria-controls="pane-active">Activas</button>
+        <button class="tab"           data-tab="mine"      role="tab" aria-selected="false" aria-controls="pane-mine">Mis ofertas</button>
+        <button class="tab"           data-tab="exchanges" role="tab" aria-selected="false" aria-controls="pane-exchanges">Mis intercambios</button>
+        <button class="tab"           data-tab="create"    role="tab" aria-selected="false" aria-controls="pane-create">Crear oferta</button>
+        <button class="tab"           data-tab="orders"    role="tab" aria-selected="false" aria-controls="pane-orders">Gestionar órdenes</button>
+        <button class="tab"           data-tab="wallet"    role="tab" aria-selected="false" aria-controls="pane-wallet">Billetera</button>
+      </nav>
+
+      <div class="tabpanes">
+        <div id="pane-active"    role="tabpanel"></div>
+        <div id="pane-mine"      role="tabpanel" hidden></div>
+        <div id="pane-exchanges" role="tabpanel" hidden></div>
+
+        <div id="pane-create" role="tabpanel" hidden>
+          <h3>Crear oferta</h3>
+          <div class="row">
+            <input id="title" type="text" placeholder="título" />
+            <input id="minutes" type="number" min="5" step="5" placeholder="minutos" />
+          </div>
+          <div class="row">
+            <input id="category" type="text" placeholder="categoría (opcional)" />
+            <input id="location" type="text" placeholder="ubicación/pista (opcional)" />
+          </div>
+          <textarea id="desc" rows="2" placeholder="descripción"></textarea>
+          <button id="offerBtn" class="btn primary" type="button">Publicar</button>
+        </div>
+
+        <div id="pane-orders" role="tabpanel" hidden></div>
+
+        <div id="pane-wallet" role="tabpanel" hidden>
+          <h3>Saldo: <span id="walletBalance">0</span> h</h3>
+          <div id="ledgerList"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" aria-live="polite"></div>
+
+
+<aside id="chat-panel" class="chat-panel hidden">
+  <header class="chat-header">
+    <h3>Mensajes</h3>
+    <button id="close-chat">×</button>
+  </header>
+
+  <section class="chat-layout">
+    <div class="chat-conversations" id="chat-conversations"></div>
+
+    <div class="chat-thread">
+      <div id="chat-messages" class="chat-messages"></div>
+      <form id="chat-form" autocomplete="off">
+        <input id="chat-input" type="text" placeholder="Escribe un mensaje..." maxlength="4000" required />
+        <button class="btn" type="submit">Enviar</button>
+      </form>
+    </div>
+  </section>
+</aside>
+
+
+
+  <!-- ENTRY POINT del dashboard -->
+  <script type="module" src="./src/dashboard.js"></script>
+</body>
+</html>
