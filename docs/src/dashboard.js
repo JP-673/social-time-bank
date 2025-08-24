@@ -94,4 +94,4 @@ async function guard() {
 window.addEventListener('DOMContentLoaded', async () => {
   const user = await guard();
   if (user) bootUI(); // enciende tabs/renderers
-});
+};
