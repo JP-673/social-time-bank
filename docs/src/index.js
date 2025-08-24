@@ -1,14 +1,12 @@
-// /src/index.js (lógica de la landing)
+// /src/index.js (landing)
 import { listenAuth, refreshUser, signIn, register } from './auth.js';
 
 const $ = (id) => document.getElementById(id);
-const msg = (t)=> { const m=$('msg'); if (m) m.textContent = t || ''; };
-
-function toDashboard() { location.href = './dashboard.html'; }
+const showMsg = (id, t='') => { const el = $(id); if (el) el.textContent = t; };
+const toDash = () => { location.href = './dashboard.html'; };
 
 function deriveDisplayName(email){
   const local = (email || '').split('@')[0] || 'Usuario';
-  // Capitaliza algo básico: "juan.perez" -> "Juan Perez"
   return local.replace(/[._-]+/g,' ')
               .split(' ')
               .filter(Boolean)
@@ -18,46 +16,67 @@ function deriveDisplayName(email){
 
 window.addEventListener('DOMContentLoaded', async () => {
   listenAuth();
-
-  // Si ya está logueado, vamos directo
   const user = await refreshUser();
-  if (user) { toDashboard(); return; }
+  if (user) { toDash(); return; }
 
-  const form = $('loginForm');
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    msg('Ingresando…');
-    try {
-      await signIn(form.email.value.trim(), form.password.value.trim());
-      toDashboard();
-    } catch (e) {
-      msg(e?.message || String(e));
-    }
-  });
+  // ===== Variante A: formulario de LOGIN (si existe) =====
+  const loginForm = $('loginForm');
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      showMsg('msgLogin','Ingresando…'); // si no existe, no pasa nada
+      try {
+        await signIn(loginForm.loginEmail?.value?.trim() ?? loginForm.email?.value?.trim(),
+                     loginForm.loginPassword?.value ?? loginForm.password?.value);
+        toDash();
+      } catch (err) {
+        showMsg('msgLogin', err?.message || String(err));
+        showMsg('msg', err?.message || String(err)); // compat con tu msg original
+      }
+    });
+  }
 
-  $('registerBtn').addEventListener('click', async () => {
-    const email = form.email.value.trim();
-    const password = form.password.value.trim();
-    if (!email || !password) { msg('Completá email y contraseña.'); return; }
+  // ===== Variante A-1: botón "Crear cuenta" dentro del mismo form (si existe) =====
+  const registerBtn = $('registerBtn');
+  if (registerBtn && loginForm) {
+    registerBtn.addEventListener('click', async () => {
+      const email = (loginForm.email?.value || loginForm.loginEmail?.value || '').trim();
+      const password = (loginForm.password?.value || loginForm.loginPassword?.value || '');
+      if (!email || !password) { showMsg('msg','Completá email y contraseña.'); return; }
 
-    // 1) intentá tomar un input #signupDisplay si existiera en el HTML
-    let displayNameEl = $('signupDisplay');
-    let displayName = displayNameEl?.value?.trim();
+      // intenta leer displayName si hay un input con ese id
+      let displayName = $('signupDisplay')?.value?.trim();
+      if (!displayName) {
+        const suggested = deriveDisplayName(email);
+        displayName = (prompt('Elegí tu nombre visible:', suggested) || '').trim() || suggested;
+      }
 
-    // 2) si no existe o está vacío, pedilo con prompt
-    if (!displayName) {
-      const suggested = deriveDisplayName(email);
-      displayName = (prompt('Elegí tu nombre visible:', suggested) || '').trim();
-      if (!displayName) displayName = suggested; // 3) fallback: derivado del email
-    }
+      showMsg('msg','Creando cuenta…');
+      try {
+        await register(email, password, displayName); // tu auth.js debe aceptar el 3er arg
+        showMsg('msg','Cuenta creada. Revisá tu email y luego iniciá sesión.');
+      } catch (err) {
+        showMsg('msg', err?.message || String(err));
+      }
+    });
+  }
 
-    msg('Creando cuenta…');
-    try {
-      // register debe aceptar (email, password, displayName)
-      await register(email, password, displayName);
-      msg('Cuenta creada. Revisá tu email y luego iniciá sesión.');
-    } catch (e) {
-      msg(e?.message || String(e));
-    }
-  });
+  // ===== Variante B: formulario de SIGNUP separado (si existe) =====
+  const signupForm = $('signupForm');
+  if (signupForm) {
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = (signupForm.signupEmail?.value || signupForm.email?.value || '').trim();
+      const password = (signupForm.signupPassword?.value || signupForm.password?.value || '');
+      let displayName = (signupForm.signupDisplay?.value || '').trim() || deriveDisplayName(email);
+
+      showMsg('msgSignup','Creando cuenta…');
+      try {
+        await register(email, password, displayName);
+        showMsg('msgSignup','Cuenta creada. Revisá tu correo y luego iniciá sesión.');
+      } catch (err) {
+        showMsg('msgSignup', err?.message || String(err));
+      }
+    });
+  }
 });
