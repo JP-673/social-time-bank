@@ -18,7 +18,8 @@ function buildPath(file) {
   return `${location.origin}${dir}${file}`;
 }
 
-const gotoLanding = () => location.replace(buildPath('login.html'));
+const gotoLanding = () => location.replace('login.html');
+
 
 const $ = (id, alt) => document.getElementById(id) || (alt ? document.getElementById(alt) : null);
 
@@ -83,22 +84,30 @@ async function renderMiniLedger(user) {
 // AUTH / WIRING
 // ===============================
 function wireSidebarLogout() {
-  const btn = $('sbLogoutBtn', 'logoutBtn');
+  const btn = document.getElementById('logoutBtn'); // 👈 usamos tu ID real
   if (!btn) return;
+
   btn.addEventListener('click', async () => {
     try {
-      await logout();                         // revoca sesión en supabase
-      Object.keys(localStorage).forEach(k => { // borra residuos
+      await logout();   // llama a auth.js → supabase.auth.signOut()
+
+      // 🔥 limpieza extra: borra tokens locales
+      Object.keys(localStorage).forEach(k => {
         if (k.startsWith('sb-')) localStorage.removeItem(k);
       });
+      Object.keys(sessionStorage).forEach(k => {
+        if (k.startsWith('sb-')) sessionStorage.removeItem(k);
+      });
+
       setState({ currentUser: null });
-      gotoLanding();                          // te manda a login.html
+      gotoLanding();    // te manda a login.html
     } catch (e) {
       console.error('Logout error', e);
       alert('No se pudo cerrar sesión');
     }
   });
 }
+
 
 function wireQuickActions() {
   document.querySelectorAll('.quick-actions [data-tab]').forEach(btn => {
