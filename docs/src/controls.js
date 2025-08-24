@@ -95,12 +95,24 @@ function wireDynamicActions() {
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
-  // 1) listeners primero (UI responde inmediatamente)
+  // 1) Listeners primero (no dependen del user)
   wireTabs();
   wireLogout();
   wireOfferForm();
   wireDynamicActions();
 
-  // 2) render de datos
+  // 2) Guard de sesión (antes de render)
+  let user = await getCurrentUser();
+  if (!user) {
+    // pequeño retry por la hidratación de Supabase
+    await new Promise(r => setTimeout(r, 120));
+    user = await refreshUser();
+  }
+  if (!user) {
+    location.replace('login.html');
+    return;
+  }
+
+  // 3) Render de datos (una sola vez)
   await initDashboard();
 });
