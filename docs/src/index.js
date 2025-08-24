@@ -58,24 +58,10 @@ function wireLogin() {
       const { error } = await signIn(email, pass);
       if (error) throw error;
 
-      if (window.supabase?.auth?.getSession) {
-        const { data, error: se } = await window.supabase.auth.getSession();
-        if (se) console.warn('getSession warn:', se);
-        console.log('SESSION OK', !!data?.session);
-      }
-
-      // Clean up URL if it ends with '?'
-      if (location.search === '?') {
-        history.replaceState({}, '', location.pathname);
-      }
-
-      const url = buildRedirect();
-      console.log('REDIRIGIENDO A:', url);
-      window.location.replace(url);
+      // Redirect to dashboard after successful login
+      window.location.replace(buildRedirect());
     } catch (err) {
-      console.error('SIGNIN ERROR', err);
       showMsg('msgLogin', err?.message || 'No se pudo iniciar sesión.');
-      showMsg('msg', err?.message || 'Error'); // compat
     }
   });
 }
