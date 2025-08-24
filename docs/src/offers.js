@@ -1,50 +1,53 @@
 // /src/offers.js
 import { supabase } from './supabaseClient.js';
-import { getState } from './state.js';
 
 const TABLE = 'offers';
 
-/**
- * Crea oferta con el esquema real:
- * owner_id (FK a profiles.id)
- * duration_minutes (int)
- * title, description, category, location_hint
- * active (bool), status ('open'|'taken'|'closed'|'cancelled')
- */
+// Espera hasta 2.5s a que la sesión esté hidratada (evita falsos "no logeado")
+async function waitUserId(maxMs = 2500) {
+  const t0 = performance.now();
+  for (;;) {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (user?.id) return user.id;
+    if (error) console.warn('[offers] getUser error (retry)', error);
+    if (performance.now() - t0 > maxMs) return null;
+    await new Promise(r => setTimeout(r, 120));
+  }
+}
+
+/** Crear/publicar oferta */
 export async function createOffer({
   title,
-  minutes,           // <- number
+  minutes,            // number
   description = '',
-  category = null,    // <- opcional
-  locationHint = null // <- opcional
+  category = null,
+  locationHint = null
 }) {
-  const user = getState().currentUser;
-  if (!user) throw new Error('Necesitás iniciar sesión para crear ofertas.');
+  const owner_id = await waitUserId();
+  if (!owner_id) throw new Error('Necesitás iniciar sesión para crear ofertas.');
+
+  const row = {
+    owner_id,
+    title: (title || '').trim(),
+    description: (description || '').trim(),
+    category,
+    location_hint: locationHint,
+    duration_minutes: Number(minutes) || 0,
+    active: true,
+    status: 'open'
+  };
 
   const { data, error } = await supabase
     .from(TABLE)
-    .insert([{
-      owner_id: user.id,
-      title,
-      description,
-      category,
-      location_hint: locationHint,
-      duration_minutes: minutes,
-      active: true,
-      status: 'open'
-    }])
-    .select()
+    .insert([row])
+    .select('id')
     .single();
 
   if (error) throw error;
   return data;
 }
 
-/**
- * Listado con JOIN correcto:
- * FK: offers.owner_id -> profiles.id (usa el nombre REAL del constraint)
- * Si tu constraint se llama distinto, ajustá el sufijo !offers_owner_id_fkey
- */
+/** Listar ofertas (con JOIN a profiles) */
 export async function getOffers({ limit = 50, ownerId = null, category = null } = {}) {
   let query = supabase
     .from(TABLE)
@@ -61,30 +64,31 @@ export async function getOffers({ limit = 50, ownerId = null, category = null } 
 
   const { data, error } = await query;
   if (error) throw error;
-  return data;
+  // normaliza para que dashboard.js pueda usar o.author.display_name
+  return (data || []).map(o => ({ ...o, author: o.author || null }));
 }
 
-/**
- * Tomar oferta (devuelve el exchange creado por el RPC)
- */
+/** Tomar oferta (usa RPC) */
 export async function takeOffer(offerId) {
   const { data, error } = await supabase.rpc('take_offer', { p_offer_id: offerId });
   if (error) throw error;
   return data;
 }
 
-
+/** Cerrar oferta propia */
 export async function closeOffer(offerId) {
-  const user = getState().currentUser;
-  if (!user) throw new Error('Necesitás iniciar sesión.');
+  const owner_id = await waitUserId();
+  if (!owner_id) throw new Error('Necesitás iniciar sesión.');
+
   const { data, error } = await supabase
     .from(TABLE)
     .update({ status: 'cancelled', active: false })
     .eq('id', offerId)
-    .eq('owner_id', user.id)
+    .eq('owner_id', owner_id)
     .eq('status', 'open')
-    .select()
+    .select('id, status')
     .single();
+
   if (error) throw error;
   return data;
 }
