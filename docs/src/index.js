@@ -9,16 +9,6 @@ const showMsg = (id, t='') => {
   if (el) el.textContent = t;
 };
 
-function deriveDisplayName(email=''){
-  const local = email.split('@')[0] || 'Usuario';
-  return local.replace(/[._-]+/g,' ')
-              .split(' ')
-              .filter(Boolean)
-              .map(s => s.charAt(0).toUpperCase() + s.slice(1))
-              .join(' ');
-}
-
-/** Lee el valor del primer input que exista según una lista de IDs. */
 function readInput(ids) {
   for (const id of ids) {
     const el = document.getElementById(id);
@@ -29,6 +19,7 @@ function readInput(ids) {
 
 /** Wirea el login aunque cambien IDs (usa varias alternativas). */
 function wireLogin() {
+  // ⚠️ IMPORTANTE: no uses tu $ = getElementById para selectores CSS.
   const form =
     document.querySelector('#loginForm') ||
     document.querySelector('[data-role="login-form"]') ||
@@ -54,11 +45,10 @@ function wireLogin() {
     }
 
     try {
-      // Asegúrate de tener una función signIn que devuelva { error }
       const { error } = await signIn(email, pass);
       if (error) throw error;
 
-      // Redirige al dashboard después de login exitoso
+      // Redirect to dashboard after successful login
       window.location.replace(buildRedirect());
     } catch (err) {
       showMsg('msgLogin', err?.message || 'No se pudo iniciar sesión.');
