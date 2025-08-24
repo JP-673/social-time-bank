@@ -20,47 +20,6 @@ function deriveDisplayName(email=''){
               .join(' ');
 }
 
-/** Lee value de múltiples posibles inputs (by id o name). */
-function readInput(candidates = []) {
-  for (const c of candidates) {
-    const el = document.getElementById(c) || $(`[name="${c}"]`);
-    if (el && typeof el.value === 'string') return el.value;
-  }
-  return '';
-}
-
-async function loadHoodsIntoSelect() {
-  const sel = document.getElementById('signupHood');
-  if (!sel) return;
-  sel.disabled = true;
-  try {
-    const { data, error } = await supabase
-      .from('hoods')
-      .select('id,name')
-      .order('name', { ascending: true });
-    if (error) throw error;
-    sel.innerHTML = `<option value="">Elegí tu barrio</option>` +
-      (data || []).map(h => `<option value="${h.id}">${h.name}</option>`).join('');
-  } catch (e) {
-    showMsg('msgSignup','No se pudieron cargar los barrios.');
-  } finally {
-    sel.disabled = false;
-  }
-}
-
-/** Redirige siempre a /dashboard.html respetando subcarpetas (GH Pages). */
-function buildRedirect() {
-  const base = location.pathname.replace(/(index|entrar)\.html?$/i, '');
-  return `${location.origin}${base}dashboard.html`;
-}
-
-/** URL absoluta al dashboard respetando subcarpetas (GH Pages). */
-function buildRedirect() {
-  // location.pathname = /social-time-bank/entrar.html  (o /index.html)
-  const base = location.pathname.replace(/(?:index|entrar)\.html?$/i, '');
-  return `${location.origin}${base}dashboard.html`;
-}
-
 /** Lee el valor del primer input que exista según una lista de IDs. */
 function readInput(ids) {
   for (const id of ids) {
@@ -89,7 +48,7 @@ function wireLogin() {
   if (!form) return;
 
   // Evita que el form meta "?" si por algo se dispara submit nativo
-  try { form.setAttribute('action', ''); } catch {}
+  try { form.setAttribute('action', '#'); } catch {}
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
