@@ -3,39 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Banco de Tiempo — Ingresar / Crear cuenta</title>
+  <title>Banco de Tiempo — Ingresar</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <main>
     <h1>⏳ Banco de Tiempo</h1>
+
     <form id="loginForm" autocomplete="on" action="#">
       <input id="loginEmail" type="email" placeholder="Correo" required />
       <input id="loginPassword" type="password" placeholder="Contraseña" required />
       <button id="loginBtn" type="submit">Entrar</button>
-      <div id="msgLogin" class="muted"></div>
+      <div id="msgLogin" class="muted" aria-live="polite"></div>
     </form>
   </main>
 
   <!-- Punto de entrada -->
-  <script type="module" src="./src/index.js"></script>
-  <script>
-    // Toggle de pestañas básico
-    const tabL = document.getElementById('tabLogin');
-    const tabS = document.getElementById('tabSignup');
-    const paneL = document.getElementById('paneLogin');
-    const paneS = document.getElementById('paneSignup');
-    function show(which){
-      const login = which === 'login';
-      tabL.classList.toggle('is-active', login);
-      tabS.classList.toggle('is-active', !login);
-      paneL.classList.toggle('hidden', !login);
-      paneS.classList.toggle('hidden', login);
-      tabL.setAttribute('aria-selected', String(login));
-      tabS.setAttribute('aria-selected', String(!login));
-    }
-    tabL?.addEventListener('click', () => show('login'));
-    tabS?.addEventListener('click', () => show('signup'));
+  <script type="module">
+    console.log('[HTML] login.html cargado');
   </script>
+  <script type="module" src="./src/index.js"></script>
 </body>
 </html>
