@@ -24,17 +24,14 @@ export async function acceptExchange(exchangeId) {
   return data;
 }
 
-export async function completeExchange(exchangeId, proof = null) {
+// exchanges.js
+export async function completeExchange(exchangeId) {
   const { data, error } = await supabase
-    .from(TABLE)
-    .update({ status: 'completed', proof })
-    .eq('id', exchangeId)
-    .eq('status', 'accepted')
-    .select()
-    .single();
+    .rpc('settle_exchange', { p_exchange_id: exchangeId });
   if (error) throw error;
   return data;
 }
+
 
 export async function cancelExchange(exchangeId, reason = '') {
   const user = getState().currentUser;
