@@ -31,27 +31,24 @@
   <main class="layout">
     <!-- Sidebar -->
 <aside class="sidebar card">
+  <!-- PERFIL -->
   <div class="who">
-    <strong id="userName">—</strong>
-    <small id="userHood" class="muted"></small>
+    <strong id="sbUserName">—</strong>
+    <small id="sbUserHood" class="muted"></small>
   </div>
 
+  <!-- SALDO + SALIR -->
   <div class="balance-row">
-    <span class="chip"><span id="hdrBalance">0</span> h</span>
-    <button id="logoutBtn" class="btn ghost" type="button">Salir</button>
+    <span class="chip"><span id="sbHdrBalance">0</span> h</span>
   </div>
 
-  <div class="quick-actions">
-    <button class="btn primary block" data-tab="create">➕ Nueva oferta</button>
-    <button class="btn block" data-tab="mine">📦 Mis ofertas</button>
-    <button class="btn block" data-tab="wallet">💳 Billetera</button>
-  </div>
-
+  <!-- MOVIMIENTOS -->
   <div class="mini-ledger">
     <h4 class="muted">Movimientos</h4>
     <div id="miniLedger" class="list"></div>
   </div>
 </aside>
+
 
     <!-- Contenido principal -->
     <section class="content card">
