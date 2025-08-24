@@ -1,39 +1,41 @@
 // docs/src/dashboard.js
 import { listenAuth, refreshUser, logout } from './auth.js';
 import { bootUI } from './ui.js';
-import * as Profiles from './profile.js';   // tu helper actual
+import * as Profiles from './profile.js';      // getProfileWithHood()
 import { setState } from './state.js';
-import { getBalance, getLedger } from './wallet.js'; // para saldo y movimientos
+import { getBalance, getLedger } from './wallet.js';
 
-function gotoLanding() { location.replace('index.html'); }
+// -------- utils --------
+const $ = (idA, idB=null) => document.getElementById(idA) || (idB ? document.getElementById(idB) : null);
+const gotoLanding = () => location.replace('index.html');
+const escapeHtml = (s='') => s.replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+const fmtH = (mins=0) => (mins/60).toFixed(2) + ' h';
 
-// ----- Sidebar renderers -----
+// -------- sidebar renderers --------
 async function renderSidebarProfile(user) {
-  const $name = document.getElementById('sbUserName');
-  const $hood = document.getElementById('sbUserHood');
-  const $bal  = document.getElementById('sbHdrBalance');
+  const $name = $('sbUserName','userName');
+  const $hood = $('sbUserHood','userHood');
+  const $bal  = $('sbHdrBalance','hdrBalance');
 
-  // nombre + hood (desde profiles si existe, si no fallback a email)
   try {
-    const prof = await Profiles.getProfileWithHood(); // { display_name, hood:{name} }
-    $name.textContent = prof?.display_name || user.email;
-    $hood.textContent = prof?.hood?.name ? `(${prof.hood.name})` : '';
+    const prof = await Profiles.getProfileWithHood(); // { display_name, hood:{ name } }
+    if ($name) $name.textContent = prof?.display_name || user.email;
+    if ($hood) $hood.textContent = prof?.hood?.name ? `(${prof.hood.name})` : '';
   } catch {
-    $name.textContent = user.email;
-    $hood.textContent = '';
+    if ($name) $name.textContent = user.email;
+    if ($hood) $hood.textContent = '';
   }
 
-  // saldo
   try {
-    const bal = await getBalance(user.id); // minutos o horas según tu impl
-    $bal.textContent = bal ?? 0;
+    const bal = await getBalance(user.id); // asume minutos; ajusta si tu API ya devuelve horas
+    if ($bal) $bal.textContent = bal ?? 0;
   } catch {
-    $bal.textContent = 0;
+    if ($bal) $bal.textContent = 0;
   }
 }
 
 async function renderMiniLedger(user) {
-  const wrap = document.getElementById('miniLedger');
+  const wrap = $('miniLedger');
   if (!wrap) return;
 
   try {
@@ -48,7 +50,7 @@ async function renderMiniLedger(user) {
           <div>${escapeHtml(tx.note ?? '—')}</div>
           <small class="muted">${escapeHtml(tx.when ?? '')}</small>
         </div>
-        <strong>${tx.delta > 0 ? '+' : ''}${formatHours(tx.delta)}</strong>
+        <strong>${tx.delta > 0 ? '+' : ''}${fmtH(tx.delta)}</strong>
       </div>
     `).join('');
   } catch {
@@ -56,46 +58,33 @@ async function renderMiniLedger(user) {
   }
 }
 
-function escapeHtml(s=''){
-  return s.replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
-}
-function formatHours(deltaMinutes=0){
-  // si delta está en minutos en tu backend:
-  const h = (deltaMinutes/60);
-  return `${h>0?'+':''}${h.toFixed(2)} h`.replace('++','+');
-}
-
-// ----- UI wiring -----
+// -------- wiring --------
 function wireSidebarLogout() {
-  document.getElementById('sbLogoutBtn')?.addEventListener('click', async () => {
+  const btn = $('sbLogoutBtn','logoutBtn');
+  btn?.addEventListener('click', async () => {
     await logout();
     setState({ currentUser: null });
     gotoLanding();
-  });
+  }, { once:true });
 }
 
 function wireQuickActions() {
   document.querySelectorAll('.quick-actions [data-tab]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const tab = btn.dataset.tab;
-      document.querySelector(`.tabs .tab[data-tab="${tab}"]`)?.click();
+      document.querySelector(`.tabs .tab[data-tab="${btn.dataset.tab}"]`)?.click();
     });
   });
 }
 
-// ----- Guard + boot -----
+// -------- guard + boot --------
 async function guard() {
   listenAuth();
   const user = await refreshUser();
   if (!user) { gotoLanding(); return null; }
 
-  // Sidebar profile + ledger
   await renderSidebarProfile(user);
   await renderMiniLedger(user);
-
-  // Logout (sidebar)
   wireSidebarLogout();
-  // Accesos rápidos → tabs
   wireQuickActions();
 
   return user;
@@ -103,5 +92,5 @@ async function guard() {
 
 window.addEventListener('DOMContentLoaded', async () => {
   const user = await guard();
-  if (user) bootUI(); // enciende tabs/renderers existentes
+  if (user) bootUI(); // enciende tabs/renderers
 });
