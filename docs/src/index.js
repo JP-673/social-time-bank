@@ -169,6 +169,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   } else {
     // estás en la landing: los botones deberían apuntar a entrar.html
     // (si querés, acá podrías forzar el href de CTA)
-    $$('.btn[href$=\"/login.html\"], .btn[href=\"/register.html\"]').forEach(a => a.setAttribute('href','entrar.html'));
+    $$('.btn[href$=\"/login.html\"], .btn[href=\"/register.html\"]').forEach(a => a.setAttribute('href','login.html'));
   }
 });
