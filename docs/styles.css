@@ -69,3 +69,29 @@
 /* Micro UX */
 .tabs{ gap:8px; }
 .btn.small{ padding:7px 10px; font-size:.95rem; }
+
+
+.topbar { 
+  position:sticky; top:0;
+  background:#11161b; 
+  border-bottom:1px solid var(--border);
+  z-index:10;
+}
+.topbar .wrap {
+  max-width:1400px;
+  margin:0 auto;
+  padding:10px 16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.brand {
+  display:flex; align-items:center; gap:.5rem;
+}
+.userbar {
+  display:flex; align-items:center; gap:1rem;
+}
+.userbar .who {
+  display:flex; flex-direction:column; align-items:flex-end;
+}
+
