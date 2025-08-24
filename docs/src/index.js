@@ -128,7 +128,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Si ya está autenticado y estamos en landing o entrar → directo al dashboard
   const { pathname } = location;
-  const onEntrar = pathname.endsWith('/entrar.html') || pathname.endsWith('entrar.html') || pathname.endsWith('/login.html') || pathname.endsWith('login.html');
+  const onEntrar = pathname.endsWith('/login.html') || pathname.endsWith('login.html') || pathname.endsWith('/login.html') || pathname.endsWith('login.html');
   const user = await refreshUser();
   console.log('User from refreshUser:', user, 'Path:', pathname);
   if (user && (onEntrar || pathname.endsWith('/index.html') || pathname.endsWith('/'))) {
@@ -150,7 +150,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 /** Redirige siempre a /dashboard.html respetando subcarpetas (GH Pages). */
 function buildRedirect() {
-  const base = location.pathname.replace(/(?:index|entrar|login)\.html?$/i, '');
+  const base = location.pathname.replace(/(?:index|login)\.html?$/i, '');
   return `${location.origin}${base}tablero.html`;
 }
 
