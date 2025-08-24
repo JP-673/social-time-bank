@@ -218,3 +218,21 @@ input:focus, textarea:focus, select:focus{ box-shadow:0 0 0 2px #2b7cff55; }
   font-size: 0.8rem;
   border-radius: 4px;
 }
+
+
+/* ===== LINKS ===== */
+
+a {
+  color: #3b82f6;           /* azul como los botones */
+  text-decoration: none;
+  font-weight: 500;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: #60a5fa;           /* un azul más claro al hover */
+}
+
+a:visited {
+  color: #3b82f6;           /* mismo color siempre, evita púrpura feo */
+}
