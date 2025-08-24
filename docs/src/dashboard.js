@@ -7,7 +7,7 @@ import { getBalance, getLedger } from './wallet.js';
 
 // >>> CHAT
 import * as Chat from './chat.js';                  // list/send/subscribe/...
-import { getProfile, displayName } from './profiles.js'; // usa display_name
+import { getProfile, displayName } from './profile.js'; // usa display_name
 // <<< CHAT
 
 // -------- utils --------
