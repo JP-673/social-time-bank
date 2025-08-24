@@ -1,13 +1,18 @@
-// /src/index.js (landing)
+// /docs/src/index.js  (sirve para landing y para entrar.html)
 import { supabase } from './supabaseClient.js';
 import { listenAuth, refreshUser, signIn, register } from './auth.js';
 
-const $ = (id) => document.getElementById(id);
-const showMsg = (id, t='') => { const el = $(id); if (el) el.textContent = t; };
-const toDash = () => { location.href = './dashboard.html'; };
+const $  = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
+const toDash = () => location.replace('./dashboard.html');
 
-function deriveDisplayName(email){
-  const local = (email || '').split('@')[0] || 'Usuario';
+const showMsg = (id, t='') => {
+  const el = document.getElementById(id);
+  if (el) el.textContent = t;
+};
+
+function deriveDisplayName(email=''){
+  const local = email.split('@')[0] || 'Usuario';
   return local.replace(/[._-]+/g,' ')
               .split(' ')
               .filter(Boolean)
@@ -15,10 +20,18 @@ function deriveDisplayName(email){
               .join(' ');
 }
 
-/* Cargar barrios en el select del signup (si existe) */
+/** Lee value de múltiples posibles inputs (by id o name). */
+function readInput(candidates = []) {
+  for (const c of candidates) {
+    const el = document.getElementById(c) || $(`[name="${c}"]`);
+    if (el && typeof el.value === 'string') return el.value;
+  }
+  return '';
+}
+
 async function loadHoodsIntoSelect() {
-  const sel = $('signupHood');
-  if (!sel) return; // si tu HTML no tiene el select, no hacemos nada
+  const sel = document.getElementById('signupHood');
+  if (!sel) return;
   sel.disabled = true;
   try {
     const { data, error } = await supabase
@@ -35,72 +48,86 @@ async function loadHoodsIntoSelect() {
   }
 }
 
-window.addEventListener('DOMContentLoaded', async () => {
-  listenAuth();
-  const user = await refreshUser();
-  if (user) { toDash(); return; }
+/** Wirea el login aunque cambien IDs (usa varias alternativas). */
+function wireLogin() {
+  // intenta encontrar un form de login por ID o por data-role o por botón submit dentro
+  const form =
+    $('#loginForm') ||
+    $('[data-role="login-form"]') ||
+    $('form[action*="login"]') ||
+    $('form#entrar') ||
+    $('form'); // último recurso si solo hay un form en entrar.html
 
-  // ===== LOGIN =====
-  const loginForm = $('loginForm');
-  if (loginForm) {
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      showMsg('msgLogin','Ingresando…');
-      try {
-        await signIn(
-          loginForm.loginEmail?.value?.trim() ?? loginForm.email?.value?.trim(),
-          loginForm.loginPassword?.value ?? loginForm.password?.value
-        );
-        toDash();
-      } catch (err) {
-        const msg = err?.message || String(err);
-        showMsg('msgLogin', msg);
-        showMsg('msg', msg); // compat con layouts viejos
-      }
-    });
-  }
+  if (!form) return;
 
-  // ===== REGISTRO (variante botón dentro del login) =====
-  const registerBtn = $('registerBtn');
-  if (registerBtn && loginForm) {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    showMsg('msgLogin','Ingresando…');
+
+    const email = readInput(['loginEmail','email','user','correo']).trim();
+    const pass  = readInput(['loginPassword','password','pass','clave']);
+
+    if (!email || !pass) {
+      showMsg('msgLogin','Completá email y contraseña.');
+      return;
+    }
+    try {
+      const { error } = await signIn(email, pass);
+      if (error) throw error;
+      toDash();
+    } catch (err) {
+      showMsg('msgLogin', err?.message || 'No se pudo iniciar sesión.');
+      showMsg('msg', err?.message || 'Error'); // compat
+    }
+  });
+}
+
+/** Wirea el registro si existe (en mismo HTML o separado). */
+function wireRegister() {
+  // botón “crear cuenta” dentro del login
+  const registerBtn = document.getElementById('registerBtn');
+  if (registerBtn) {
     registerBtn.addEventListener('click', async () => {
-      const email = (loginForm.email?.value || loginForm.loginEmail?.value || '').trim();
-      const password = (loginForm.password?.value || loginForm.loginPassword?.value || '');
+      const email = readInput(['email','loginEmail','regEmail','signupEmail']).trim();
+      const password = readInput(['password','loginPassword','regPassword','signupPassword']);
       if (!email || !password) { showMsg('msg','Completá email y contraseña.'); return; }
 
-      // display name
-      let display_name = $('signupDisplay')?.value?.trim();
+      let display_name = readInput(['signupDisplay','display_name']).trim();
       if (!display_name) {
         const suggested = deriveDisplayName(email);
         display_name = (prompt('Elegí tu nombre visible:', suggested) || '').trim() || suggested;
       }
-
-      // hood_id (si existiera el select en el DOM)
-      const hood_id = $('signupHood')?.value || null;
+      const hood_id = (document.getElementById('signupHood')?.value) || null;
 
       showMsg('msg','Creando cuenta…');
       try {
         await register(email, password, hood_id ? { display_name, hood_id } : { display_name });
         showMsg('msg','Cuenta creada. Revisá tu email y luego iniciá sesión.');
       } catch (err) {
-        showMsg('msg', err?.message || String(err));
+        showMsg('msg', err?.message || 'No se pudo crear la cuenta.');
       }
     });
   }
 
-  // ===== REGISTRO (variante formulario separado) =====
-  await loadHoodsIntoSelect(); // llena el select si existe
-  const signupForm = $('signupForm');
+  // formulario de signup dedicado
+  const signupForm =
+    $('#signupForm') ||
+    $('[data-role="signup-form"]') ||
+    $('form[action*="register"]') ||
+    $('form#crear');
+
   if (signupForm) {
     signupForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = (signupForm.signupEmail?.value || signupForm.email?.value || '').trim();
-      const password = (signupForm.signupPassword?.value || signupForm.password?.value || '');
-      const display_name = (signupForm.signupDisplay?.value || '').trim() || deriveDisplayName(email);
-      const hood_id = $('signupHood')?.value || '';
+      const email = readInput(['signupEmail','email','regEmail']).trim();
+      const password = readInput(['signupPassword','password','regPassword']);
+      const display_name = (readInput(['signupDisplay','display_name']) || deriveDisplayName(email)).trim();
+      const hood_id = document.getElementById('signupHood')?.value || '';
 
       if (!display_name) { showMsg('msgSignup','Poné un nombre visible.'); return; }
-      if ($('signupHood') && !hood_id) { showMsg('msgSignup','Elegí tu barrio.'); return; }
+      if (document.getElementById('signupHood') && !hood_id) {
+        showMsg('msgSignup','Elegí tu barrio.'); return;
+      }
 
       showMsg('msgSignup','Creando cuenta…');
       try {
@@ -110,5 +137,29 @@ window.addEventListener('DOMContentLoaded', async () => {
         showMsg('msgSignup', err?.message || 'No se pudo crear la cuenta.');
       }
     });
+  }
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  listenAuth();
+
+  // Si ya está autenticado y estamos en landing o entrar → directo al dashboard
+  const { pathname } = location;
+  const onEntrar = pathname.endsWith('/entrar.html') || pathname.endsWith('entrar.html');
+  const user = await refreshUser();
+  if (user && (onEntrar || pathname.endsWith('/index.html') || pathname.endsWith('/'))) {
+    toDash();
+    return;
+  }
+
+  // Solo si existe UI de login/registro en esta página, lo wireamos
+  if (onEntrar) {
+    wireLogin();
+    await loadHoodsIntoSelect();
+    wireRegister();
+  } else {
+    // estás en la landing: los botones deberían apuntar a entrar.html
+    // (si querés, acá podrías forzar el href de CTA)
+    $$('.btn[href$=\"/login.html\"], .btn[href=\"/register.html\"]').forEach(a => a.setAttribute('href','entrar.html'));
   }
 });
