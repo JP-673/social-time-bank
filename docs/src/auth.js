@@ -12,10 +12,11 @@ function deriveDisplayName(email) {
               .join(' ');
 }
 function buildRedirect() {
-  // /docs/index.html -> /docs/dashboard.html  |  /index.html -> /dashboard.html
-  const base = location.pathname.replace(/index\.html?$/i, '');
+
+  const base = location.pathname.replace(/(index|entrar)\.html?$/i, '');
   return `${location.origin}${base}dashboard.html`;
 }
+
 
 /* ---------------- profiles helpers ---------------- */
 async function upsertProfileRow({ id, email, display_name }) {
