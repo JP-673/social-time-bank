@@ -30,6 +30,13 @@
     <section id="paneSignup" class="card hidden" role="tabpanel" aria-labelledby="tabSignup">
       <form id="signupForm" autocomplete="on">
         <input id="signupDisplay" type="text" placeholder="Nombre visible" required />
+
+        <!-- 👇 nuevo: selector de barrio -->
+        <select id="signupHood" required>
+          <option value="">Elegí tu barrio</option>
+          <!-- Se llena desde src/index.js con la tabla hoods -->
+        </select>
+
         <input id="signupEmail"   type="email" placeholder="Correo" required />
         <input id="signupPassword" type="password" placeholder="Contraseña" required />
         <button id="signupBtn" type="submit">Crear cuenta</button>
