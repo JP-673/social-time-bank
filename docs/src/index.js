@@ -1,4 +1,5 @@
 import { listenAuth, refreshUser, signIn, register } from './auth.js';
+import { supabase } from './supabaseClient.js';
 
 const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
@@ -19,7 +20,6 @@ function readInput(ids) {
 
 /** Wirea el login aunque cambien IDs (usa varias alternativas). */
 function wireLogin() {
-  // ⚠️ IMPORTANTE: no uses tu $ = getElementById para selectores CSS.
   const form =
     document.querySelector('#loginForm') ||
     document.querySelector('[data-role="login-form"]') ||
@@ -28,27 +28,22 @@ function wireLogin() {
     document.querySelector('form'); // último recurso
 
   if (!form) return;
-
-  // Evita que el form meta "?" si por algo se dispara submit nativo
   try { form.setAttribute('action', '#'); } catch {}
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     showMsg('msgLogin', 'Ingresando…');
-
     const email = readInput(['loginEmail','email','user','correo']).trim();
     const pass  = readInput(['loginPassword','password','pass','clave']);
-
     if (!email || !pass) {
       showMsg('msgLogin','Completá email y contraseña.');
       return;
     }
-
     try {
+      console.log('Intentando login con:', email);
       const { error } = await signIn(email, pass);
+      console.log('Resultado de signIn:', error);
       if (error) throw error;
-
-      // LOG IMPORTANTE:
       console.log('Login OK, redirigiendo a:', buildRedirect());
       window.location.replace(buildRedirect());
     } catch (err) {

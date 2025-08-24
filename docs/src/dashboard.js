@@ -20,6 +20,8 @@ function buildPath(file) {
 
 const gotoLanding = () => location.replace(buildPath('login.html'));
 
+const $ = (id, alt) => document.getElementById(id) || (alt ? document.getElementById(alt) : null);
+
 // ===============================
 // SIDEBAR
 // ===============================
