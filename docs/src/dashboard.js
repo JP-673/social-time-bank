@@ -4,6 +4,8 @@ import { bootUI } from './ui.js';
 import * as Profiles from './profile.js';
 import { setState } from './state.js';
 import { getBalance, getLedger } from './wallet.js';
+import { supabase } from './supabaseClient.js';
+
 
 // >>> CHAT
 import * as Chat from './chat.js';                  // list/send/subscribe/...
@@ -11,12 +13,12 @@ import { getProfileById, getProfilesBulk, displayName } from './profile.js';
 // <<< CHAT
 
 // -------- utils --------
-const $ = (idA, idB = null) =>
-  document.getElementById(idA) || (idB ? document.getElementById(idB) : null);
-const gotoLanding = () => location.replace('entrar.html'); // ← ahora va al login
-const escapeHtml = (s = '') =>
-  s.replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
-const fmtH = (mins = 0) => (mins / 60).toFixed(2) + ' h';
+function buildPath(file) {
+  const dir = location.pathname.replace(/[^/]*$/, '');
+  return `${location.origin}${dir}${file}`;
+}
+
+const gotoLanding = () => location.replace(buildPath('login.html'));
 
 // ===============================
 // SIDEBAR
