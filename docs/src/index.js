@@ -104,21 +104,23 @@ function wireLogin() {
     }
 
     try {
-      // tu signIn(email, pass) debe hacer supabase.auth.signInWithPassword(...)
       const { error } = await signIn(email, pass);
       if (error) throw error;
 
-      // Asegura que la sesión quede asentada antes de navegar
       if (window.supabase?.auth?.getSession) {
         const { data, error: se } = await window.supabase.auth.getSession();
         if (se) console.warn('getSession warn:', se);
         console.log('SESSION OK', !!data?.session);
       }
 
-      // Redirección limpia y absoluta
+      // Clean up URL if it ends with '?'
+      if (location.search === '?') {
+        history.replaceState({}, '', location.pathname);
+      }
+
       const url = buildRedirect();
       console.log('REDIRIGIENDO A:', url);
-      window.location.replace(url); // reemplaza historial y evita volver a entrar.html
+      window.location.replace(url);
     } catch (err) {
       console.error('SIGNIN ERROR', err);
       showMsg('msgLogin', err?.message || 'No se pudo iniciar sesión.');
