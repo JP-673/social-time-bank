@@ -30,25 +30,24 @@
 
   <main class="layout">
     <!-- Sidebar -->
-<aside class="sidebar card">
-  <!-- PERFIL -->
-  <div class="who">
-    <strong id="sbUserName">—</strong>
-    <small id="sbUserHood" class="muted"></small>
-  </div>
+    <aside class="sidebar card">
+      <!-- PERFIL -->
+      <div class="who">
+        <strong id="sbUserName">—</strong>
+        <small id="sbUserHood" class="muted"></small>
+      </div>
 
-  <!-- SALDO + SALIR -->
-  <div class="balance-row">
-    <span class="chip"><span id="sbHdrBalance">0</span> h</span>
-  </div>
+      <!-- SALDO -->
+      <div class="balance-row">
+        <span class="chip"><span id="sbHdrBalance">0</span> h</span>
+      </div>
 
-  <!-- MOVIMIENTOS -->
-  <div class="mini-ledger">
-    <h4 class="muted">Movimientos</h4>
-    <div id="miniLedger" class="list"></div>
-  </div>
-</aside>
-
+      <!-- MOVIMIENTOS -->
+      <div class="mini-ledger">
+        <h4 class="muted">Movimientos</h4>
+        <div id="miniLedger" class="list"></div>
+      </div>
+    </aside>
 
     <!-- Contenido principal -->
     <section class="content card">
@@ -61,24 +60,51 @@
         <button class="tab"            data-tab="wallet"    role="tab" aria-selected="false" aria-controls="pane-wallet"    type="button">Billetera</button>
       </nav>
 
-
       <div class="tabpanes">
         <div id="pane-active"    role="tabpanel"></div>
         <div id="pane-mine"      role="tabpanel" hidden></div>
         <div id="pane-exchanges" role="tabpanel" hidden></div>
 
+        <!-- CREAR OFERTA -->
         <div id="pane-create" role="tabpanel" hidden>
           <h3>Crear oferta</h3>
-          <div class="row">
-            <input id="title" type="text" placeholder="título" />
-            <input id="minutes" type="number" min="5" step="5" placeholder="minutos" />
-          </div>
-          <div class="row">
-            <input id="category" type="text" placeholder="categoría (opcional)" />
-            <input id="location" type="text" placeholder="ubicación/pista (opcional)" />
-          </div>
-          <textarea id="desc" rows="2" placeholder="descripción"></textarea>
-          <button id="offerBtn" class="btn primary" type="button">Publicar</button>
+
+          <form id="offerForm" action="javascript:void(0)" autocomplete="on">
+            <div class="row">
+              <label class="field">
+                <span>Título *</span>
+                <input id="title" name="title" type="text" placeholder="Ej: Clases de inglés" minlength="3" maxlength="80" required />
+              </label>
+
+              <label class="field">
+                <span>Duración (min) *</span>
+                <input id="minutes" name="minutes" type="number" min="15" step="15" placeholder="15" required />
+              </label>
+            </div>
+
+            <div class="row">
+              <label class="field">
+                <span>Categoría</span>
+                <input id="category" name="category" type="text" placeholder="Ej: educación, reparaciones…" maxlength="40" />
+              </label>
+
+              <label class="field">
+                <span>Ubicación</span>
+                <input id="location" name="location" type="text" placeholder="Remoto / Barrio / Pista" maxlength="60" />
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Descripción</span>
+              <textarea id="desc" name="desc" rows="3" placeholder="Contá qué ofrecés, requisitos, disponibilidad…" maxlength="500"></textarea>
+            </label>
+
+            <div class="row end" style="margin-top:.5rem">
+              <button id="offerBtn" class="btn primary" type="button">Publicar</button>
+            </div>
+
+            <small class="muted">Los campos marcados con * son obligatorios.</small>
+          </form>
         </div>
 
         <div id="pane-orders" role="tabpanel" hidden></div>
@@ -93,28 +119,27 @@
 
   <div id="toast" aria-live="polite"></div>
 
+  <!-- Chat (opcional) -->
+  <aside id="chat-panel" class="chat-panel hidden">
+    <header class="chat-header">
+      <h3>Mensajes</h3>
+      <button id="close-chat" type="button">×</button>
+    </header>
 
-<aside id="chat-panel" class="chat-panel hidden">
-  <header class="chat-header">
-    <h3>Mensajes</h3>
-    <button id="close-chat">×</button>
-  </header>
+    <section class="chat-layout">
+      <div class="chat-conversations" id="chat-conversations"></div>
 
-  <section class="chat-layout">
-    <div class="chat-conversations" id="chat-conversations"></div>
+      <div class="chat-thread">
+        <div id="chat-messages" class="chat-messages"></div>
+        <form id="chat-form" autocomplete="off">
+          <input id="chat-input" type="text" placeholder="Escribe un mensaje..." maxlength="4000" required />
+          <button class="btn" type="submit">Enviar</button>
+        </form>
+      </div>
+    </section>
+  </aside>
 
-    <div class="chat-thread">
-      <div id="chat-messages" class="chat-messages"></div>
-      <form id="chat-form" autocomplete="off">
-        <input id="chat-input" type="text" placeholder="Escribe un mensaje..." maxlength="4000" required />
-        <button class="btn" type="submit">Enviar</button>
-      </form>
-    </div>
-  </section>
-</aside>
-
-
-<script type="module" src="./src/controls.js"></script>
-
+  <!-- Punto de entrada: SOLO controls.js, que importa dashboard.js adentro -->
+  <script type="module" src="./src/controls.js"></script>
 </body>
 </html>
