@@ -4,7 +4,7 @@ import { bootUI } from './ui.js';
 import * as Profiles from './profile.js';
 import { setState } from './state.js';
 import { getBalance, getLedger } from './wallet.js';
-import { supabase } from './supabaseClient.js';
+
 
 
 // >>> CHAT

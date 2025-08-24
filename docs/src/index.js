@@ -1,10 +1,8 @@
-// /docs/src/index.js  (sirve para landing y para entrar.html)
-import { supabase } from './supabaseClient.js';
 import { listenAuth, refreshUser, signIn, register } from './auth.js';
 
 const $  = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
-const toDash = () => location.replace('./dashboard.html');
+const toDash = () => location.replace(buildRedirect());
 
 const showMsg = (id, t='') => {
   const el = document.getElementById(id);
