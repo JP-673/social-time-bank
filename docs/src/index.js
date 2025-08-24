@@ -150,7 +150,12 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 /** Redirige siempre a /dashboard.html respetando subcarpetas (GH Pages). */
 function buildRedirect() {
-  // location.pathname = /social-time-bank/login.html  (o /entrar.html)
   const base = location.pathname.replace(/(?:index|entrar|login)\.html?$/i, '');
-  return `${location.origin}${base}dashboard.html`;
+  return `${location.origin}${base}tablero.html`;
 }
+
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN') {
+    window.location.replace(buildRedirect());
+  }
+});
