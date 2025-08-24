@@ -17,6 +17,19 @@ function buildRedirect() {
   return `${location.origin}${base}dashboard.html`;
 }
 
+/* ---------------- profiles helpers ---------------- */
+async function upsertProfileRow({ id, email, display_name }) {
+  const clean = (display_name && display_name.trim()) || deriveDisplayName(email);
+  const { error } = await supabase
+    .from('profiles')
+    .upsert(
+      { id, display_name: clean, updated_at: new Date().toISOString() },
+      { onConflict: 'id' }
+    );
+  if (error) console.warn('[auth] profiles upsert error', error);
+  return clean;
+}
+
 /* ------------- sesión ------------- */
 export async function signIn(email, password) {
   setState({ isLoading: true });
@@ -26,6 +39,18 @@ export async function signIn(email, password) {
     setState({ isLoading: false });
     throw error;
   }
+
+  // Asegura profile.display_name
+  try {
+    const user = data.user;
+    if (user) {
+      const dn = user.user_metadata?.display_name || deriveDisplayName(user.email);
+      await upsertProfileRow({ id: user.id, email: user.email, display_name: dn });
+    }
+  } catch (e) {
+    console.warn('[auth] ensure profile on signIn', e);
+  }
+
   await refreshUser();
   setState({ isLoading: false });
   return data;
@@ -63,15 +88,11 @@ export async function register(email, password, displayNameOrMeta = {}) {
   // 2) crear/actualizar fila en profiles (para joins con hoods)
   try {
     if (data.user) {
-      const up = await supabase
-        .from('profiles')
-        .upsert(
-          { id: data.user.id, display_name: meta.display_name, updated_at: new Date().toISOString() },
-          { onConflict: 'id' }
-        )
-        .select('id')
-        .single();
-      if (up.error) console.warn('[auth] profiles upsert error', up.error);
+      await upsertProfileRow({
+        id: data.user.id,
+        email: data.user.email,
+        display_name: meta.display_name
+      });
     }
   } catch (e) {
     console.warn('[auth] profiles upsert catch', e);
@@ -79,6 +100,23 @@ export async function register(email, password, displayNameOrMeta = {}) {
 
   setState({ isLoading: false });
   return data;
+}
+
+/* ------------- cambiar alias ------------- */
+export async function updateDisplayName(displayName) {
+  const clean = (displayName || '').trim();
+  if (!clean) throw new Error('display_name vacío');
+
+  // actualiza metadata de auth (para que quede sincronizado)
+  const { data: udata, error: uerr } = await supabase.auth.updateUser({
+    data: { display_name: clean }
+  });
+  if (uerr) throw uerr;
+
+  // asegura profiles
+  const user = udata?.user;
+  if (user) await upsertProfileRow({ id: user.id, email: user.email, display_name: clean });
+  return clean;
 }
 
 /* ------------- logout ------------- */
@@ -99,14 +137,32 @@ export async function refreshUser() {
   return user;
 }
 
+// Handy: algunos módulos prefieren obtener el user directo
+export async function getCurrentUser() {
+  const { data, error } = await supabase.auth.getUser();
+  if (error) { console.warn('[auth] getUser error', error); return null; }
+  return data.user ?? null;
+}
+
 /* ------------- listener ------------- */
 let listenerAttached = false;
 export function listenAuth() {
   if (listenerAttached) return;
   listenerAttached = true;
 
-  supabase.auth.onAuthStateChange((ev, session) => {
+  supabase.auth.onAuthStateChange(async (ev, session) => {
     console.log('[auth] onAuthStateChange', ev, !!session?.user, session?.user?.email);
-    setState({ currentUser: session?.user ?? null });
+    const user = session?.user ?? null;
+    setState({ currentUser: user });
+
+    // cada vez que se confirme sesión o se actualice el user, sincronizamos profile
+    if (user && (ev === 'SIGNED_IN' || ev === 'USER_UPDATED')) {
+      try {
+        const dn = user.user_metadata?.display_name || deriveDisplayName(user.email);
+        await upsertProfileRow({ id: user.id, email: user.email, display_name: dn });
+      } catch (e) {
+        console.warn('[auth] ensure profile on event', e);
+      }
+    }
   });
 }
