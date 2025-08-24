@@ -18,15 +18,31 @@ async function loadHoods() {
   try {
     const sel = $('#hoodSelect');
     if (!sel) return;
+
+    // limpia todo antes de rellenar
+    sel.innerHTML = `<option value="">— Elegí tu barrio —</option>`;
+
     const rows = await listHoods(); // [{id,name},...]
-    rows.forEach(h => {
+    if (rows?.length) {
+      rows.forEach(h => {
+        const opt = document.createElement('option');
+        opt.value = h.id;
+        opt.textContent = h.name;
+        sel.appendChild(opt);
+      });
+    } else {
+      // fallback si no hay barrios cargados
       const opt = document.createElement('option');
-      opt.value = h.id;
-      opt.textContent = h.name;
+      opt.value = '';
+      opt.textContent = 'No hay barrios disponibles';
       sel.appendChild(opt);
-    });
+    }
   } catch (e) {
-    console.warn('[register] listHoods error', e);
+    console.error('[register] listHoods error', e);
+    const sel = $('#hoodSelect');
+    if (sel) {
+      sel.innerHTML = `<option value="">(error al cargar barrios)</option>`;
+    }
   }
 }
 
@@ -51,13 +67,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     msg('Creando cuenta…');
 
     try {
-      // podés pasar meta como objeto; tu auth.js ya lo soporta
       await register(email, pass1, { display_name: displayName, hood_id });
-
-      // Si tu proyecto requiere verificación por email:
       msg('¡Listo! Te enviamos un correo para confirmar. Luego podés ingresar.');
-      // Si NO exige verificación, podrías redirigir directo:
-      // location.replace('./tablero.html');
+      // o si no usás confirmación: location.replace('./tablero.html');
     } catch (err) {
       console.error('[register] error', err);
       msg(err?.message || 'No se pudo crear la cuenta.');
