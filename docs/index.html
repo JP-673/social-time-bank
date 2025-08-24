@@ -1,69 +1,352 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Banco de Tiempo — Ingresar / Crear cuenta</title>
-  <link rel="stylesheet" href="./styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Banco de Tiempo — Intercambiá horas, no dinero</title>
+  <meta name="description" content="Plataforma comunitaria para intercambiar habilidades usando horas como moneda. Registrate gratis y unite al Banco de Tiempo." />
+  <meta property="og:title" content="Banco de Tiempo — Intercambiá horas, no dinero" />
+  <meta property="og:description" content="Conectá con tu comunidad, ofrecé lo que sabés y recibí ayuda. Cada hora vale lo mismo." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#1b4d3e" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #0e1311;           /* charcoal very dark */
+      --card: #121917;         /* deep teal/charcoal */
+      --muted: #a6b6b1;        /* desaturated mint-gray */
+      --text: #eaf4f1;         /* almost white with mint tint */
+      --brand: #3ad1a1;        /* fresh mint */
+      --brand-2: #65a9ff;      /* friendly blue */
+      --accent: #ffd166;       /* warm highlight */
+      --ok: #70e000;
+      --warn: #ff7b7b;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius-xl: 22px;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --maxw: 1100px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text); background: radial-gradient(1200px 800px at 10% -10%, rgba(58,209,161,.15), transparent 60%),
+                             radial-gradient(900px 700px at 110% -20%, rgba(101,169,255,.12), transparent 60%),
+                             var(--bg);
+      line-height:1.5;
+    }
+    a{color:inherit;text-decoration:none}
+    .wrapper{max-width: var(--maxw); margin: 0 auto; padding: 0 20px}
+
+    /* Header */
+    header{
+      position: sticky; top:0; z-index: 50;
+      backdrop-filter: blur(10px);
+      background: rgba(14,19,17,.6);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .nav{display:flex; align-items:center; justify-content:space-between; padding: 14px 0}
+    .brand{display:flex; gap:12px; align-items:center; font-weight:800; letter-spacing:.2px}
+    .logo{width:34px; height:34px; border-radius:12px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); display:grid; place-items:center; box-shadow: var(--shadow)}
+    .logo svg{filter: drop-shadow(0 2px 6px rgba(0,0,0,.35))}
+    nav ul{display:flex; gap:18px; list-style:none; padding:0; margin:0; align-items:center}
+    .ghost{border:1px solid rgba(255,255,255,.14); padding:10px 14px; border-radius:14px}
+    .btn{display:inline-flex; align-items:center; gap:10px; font-weight:600; padding:12px 18px; border-radius:16px; background: linear-gradient(180deg, #44d8ac, #2fb68e); color:#092219; box-shadow: var(--shadow)}
+    .btn.secondary{background: linear-gradient(180deg, #7bb5ff, #4a95ff);}
+    .btn.ghost{background: transparent; color: var(--text); border: 1px solid rgba(255,255,255,.14); box-shadow:none}
+
+    .mobile-toggle{display:none}
+
+    /* Hero */
+    .hero{padding: 64px 0 24px}
+    .hero-grid{display:grid; grid-template-columns: 1.2fr 1fr; gap: 28px; align-items:center}
+    h1{font-size: clamp(36px, 4vw, 56px); line-height:1.05; margin: 14px 0 8px}
+    .lead{font-size: clamp(16px, 1.6vw, 20px); color: var(--muted); margin-bottom: 22px}
+    .cta-row{display:flex; flex-wrap:wrap; gap:12px}
+    .hero-card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius-xl);
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+    .metrics{display:grid; grid-template-columns: repeat(3,1fr); gap:14px; margin-top:18px}
+    .pill{display:flex; gap:10px; align-items:center; padding:10px 12px; background: rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius: 999px; font-size:14px; color: var(--muted)}
+
+    /* Sections */
+    section{padding: 68px 0}
+    h2{font-size: clamp(26px, 3vw, 34px); margin: 0 0 14px}
+    .sub{color: var(--muted); margin: 0 0 28px}
+
+    .steps{display:grid; grid-template-columns: repeat(3,1fr); gap:18px}
+    .card{background: var(--card); border:1px solid rgba(255,255,255,.08); border-radius: var(--radius-lg); padding:20px; box-shadow: var(--shadow)}
+    .card h3{margin: 8px 0}
+    .card p{color: var(--muted)}
+    .icon{width:28px; height:28px}
+
+    .benefits{display:grid; grid-template-columns: repeat(4,1fr); gap:16px}
+
+    .impact{display:grid; grid-template-columns: repeat(3,1fr); gap:16px}
+    .impact .kpi{font-size: 36px; font-weight:800}
+
+    .testis{display:grid; grid-template-columns: 1fr 1fr; gap:18px}
+    blockquote{margin:0; padding:18px; background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.08); border-radius: var(--radius-md)}
+    blockquote footer{color: var(--muted); margin-top:8px}
+
+    .cta{display:grid; gap:14px; place-items:center; text-align:center}
+    .cta .note{color:var(--muted)}
+
+    /* FAQ */
+    .faq{display:grid; grid-template-columns: 1fr 1fr; gap:16px}
+    details{background: var(--card); border:1px solid rgba(255,255,255,.08); border-radius: var(--radius-md); padding:16px}
+    details summary{cursor:pointer; font-weight:600}
+    details[open]{outline:1px solid rgba(255,255,255,.12)}
+
+    /* Footer */
+    footer{padding:28px 0; color: var(--muted); border-top: 1px solid rgba(255,255,255,.06)}
+    footer .grid{display:grid; grid-template-columns: 1fr auto; gap:16px; align-items:center}
+    footer nav{display:flex; gap:16px}
+
+    /* Responsive */
+    @media (max-width: 900px){
+      .hero-grid{grid-template-columns: 1fr}
+      .steps{grid-template-columns: 1fr}
+      .benefits{grid-template-columns: 1fr 1fr}
+      .impact{grid-template-columns: 1fr 1fr}
+      .testis{grid-template-columns: 1fr}
+      .faq{grid-template-columns: 1fr}
+      nav ul{display:none}
+      .mobile-toggle{display:inline-flex; border:1px solid rgba(255,255,255,.14); padding:10px 12px; border-radius:14px}
+      header.open nav ul{display:flex; position:absolute; top:60px; right:20px; background: rgba(14,19,17,.98); padding:14px; border:1px solid rgba(255,255,255,.08); border-radius: 16px; flex-direction:column}
+    }
+  </style>
 </head>
 <body>
-  <main>
-    <h1>⏳ Banco de Tiempo</h1>
-
-    <!-- Tabs Login / Registro -->
-    <div class="tabs" role="tablist" aria-label="Auth">
-      <button id="tabLogin"  class="is-active" role="tab" aria-selected="true"  aria-controls="paneLogin">Ingresar</button>
-      <button id="tabSignup" role="tab" aria-selected="false" aria-controls="paneSignup">Crear cuenta</button>
+  <header id="top">
+    <div class="wrapper nav">
+      <a class="brand" href="#top" aria-label="Inicio Banco de Tiempo">
+        <span class="logo" aria-hidden="true">
+          <!-- reloj + flechas -->
+          <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" stroke="white" stroke-opacity=".9" stroke-width="1.6"/>
+            <path d="M12 7v5l3 2" stroke="white" stroke-opacity=".9" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span>Banco de Tiempo</span>
+      </a>
+      <nav aria-label="Principal">
+        <button class="mobile-toggle" id="mobileToggle" aria-expanded="false" aria-controls="menu">Menú</button>
+        <ul id="menu" role="menubar">
+          <li role="none"><a role="menuitem" href="#como" class="ghost">Cómo funciona</a></li>
+          <li role="none"><a role="menuitem" href="#beneficios" class="ghost">Beneficios</a></li>
+          <li role="none"><a role="menuitem" href="#historias" class="ghost">Historias</a></li>
+          <li role="none"><a role="menuitem" href="#faq" class="ghost">FAQ</a></li>
+          <li role="none"><a role="menuitem" class="btn" href="/register.html">Registrate</a></li>
+        </ul>
+      </nav>
     </div>
+  </header>
 
-    <!-- LOGIN -->
-    <section id="paneLogin" class="card" role="tabpanel" aria-labelledby="tabLogin">
-      <form id="loginForm" autocomplete="on">
-        <input id="loginEmail" type="email" placeholder="Correo" required />
-        <input id="loginPassword" type="password" placeholder="Contraseña" required />
-        <button id="loginBtn" type="submit">Entrar</button>
-        <div id="msgLogin" class="muted"></div>
-      </form>
+  <main>
+    <section class="hero">
+      <div class="wrapper hero-grid">
+        <div>
+          <span class="pill" aria-hidden="true">🚀 Piloto activo · Barrios del Sur · 120+ horas intercambiadas</span>
+          <h1>Intercambiá <span style="background:linear-gradient(90deg,var(--brand),var(--brand-2)); -webkit-background-clip:text; background-clip:text; color:transparent">horas</span>, no dinero</h1>
+          <p class="lead">Conectamos personas para compartir habilidades y resolver necesidades cotidianas. En el Banco de Tiempo, <strong>cada hora vale lo mismo</strong>.</p>
+          <div class="cta-row">
+            <a class="btn" href="/register.html" data-track="cta-hero-registrate">Registrate gratis</a>
+            <a class="btn secondary" href="#como" data-track="cta-hero-como">Cómo funciona</a>
+            <a class="btn ghost" href="/login.html" data-track="cta-hero-login">Ya tengo cuenta</a>
+          </div>
+          <div class="metrics" aria-label="Indicadores del piloto">
+            <div class="hero-card">
+              <div class="pill">⏱️ 120+ horas</div>
+              <div class="sub">Intercambiadas en el piloto</div>
+            </div>
+            <div class="hero-card">
+              <div class="pill">🤝 60+ matches</div>
+              <div class="sub">Conexiones concretadas</div>
+            </div>
+            <div class="hero-card">
+              <div class="pill">🌱 1 comunidad</div>
+              <div class="sub">Creciendo barrio a barrio</div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-card" aria-label="Vista previa de la plataforma">
+          <h3 style="margin:0 0 8px">Todo gira alrededor del tiempo</h3>
+          <p class="sub" style="margin:0 0 14px">Publicá lo que ofrecés, encontrá lo que necesitás, coordiná y listo.</p>
+          <div class="card" style="display:grid; gap:12px">
+            <div class="pill">🎸 Clase de guitarra — 1h</div>
+            <div class="pill">💻 Arreglo de PC — 2h</div>
+            <div class="pill">🐶 Paseo de perro — 1h</div>
+            <div class="pill">🧁 Taller de empanadas — 1h</div>
+          </div>
+          <div style="display:flex; gap:12px; margin-top:14px">
+            <a class="btn" href="/dashboard.html">Ver demo</a>
+            <a class="btn ghost" href="#faq">Preguntas frecuentes</a>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- SIGNUP -->
-    <section id="paneSignup" class="card hidden" role="tabpanel" aria-labelledby="tabSignup">
-      <form id="signupForm" autocomplete="on">
-        <input id="signupDisplay" type="text" placeholder="Nombre visible" required />
+    <section id="como">
+      <div class="wrapper">
+        <h2>Cómo funciona</h2>
+        <p class="sub">Tres pasos, cero drama.</p>
+        <div class="steps">
+          <article class="card">
+            <div class="pill">1</div>
+            <h3>Ofrecé tu tiempo</h3>
+            <p>Contá qué sabés hacer: clases, acompañamiento, reparaciones, trámites, lo que sea. Cada oferta cotiza en <strong>horas</strong>.</p>
+          </article>
+          <article class="card">
+            <div class="pill">2</div>
+            <h3>Recibí ayuda</h3>
+            <p>Elegí lo que necesitás y pagalo con horas que ganaste. <em>Sin plata de por medio</em>.</p>
+          </article>
+          <article class="card">
+            <div class="pill">3</div>
+            <h3>La comunidad crece</h3>
+            <p>Cada intercambio fortalece la red. Más confianza, más soluciones locales, menos burocracia.</p>
+          </article>
+        </div>
+      </div>
+    </section>
 
-        <!-- 👇 nuevo: selector de barrio -->
-        <select id="signupHood" required>
-          <option value="">Elegí tu barrio</option>
-          <!-- Se llena desde src/index.js con la tabla hoods -->
-        </select>
+    <section id="beneficios">
+      <div class="wrapper">
+        <h2>Beneficios</h2>
+        <p class="sub">Lo justo, sin vueltas.</p>
+        <div class="benefits">
+          <article class="card"><h3>Equidad</h3><p>Todas las horas valen lo mismo. Punto.</p></article>
+          <article class="card"><h3>Economía solidaria</h3><p>Menos dependencia del dinero, más valor al tiempo.</p></article>
+          <article class="card"><h3>Comunidad</h3><p>Conocés gente real, cerca, con ganas de ayudar.</p></article>
+          <article class="card"><h3>Transparencia</h3><p>Historial de intercambios claro y calificaciones mutuas.</p></article>
+        </div>
+      </div>
+    </section>
 
-        <input id="signupEmail"   type="email" placeholder="Correo" required />
-        <input id="signupPassword" type="password" placeholder="Contraseña" required />
-        <button id="signupBtn" type="submit">Crear cuenta</button>
-        <div id="msgSignup" class="muted"></div>
-      </form>
+    <section>
+      <div class="wrapper">
+        <h2>Impacto</h2>
+        <p class="sub">Indicadores que importan.</p>
+        <div class="impact">
+          <article class="card">
+            <div class="kpi">92%</div>
+            <p>Satisfacción en el piloto (encuesta interna).</p>
+          </article>
+          <article class="card">
+            <div class="kpi">+38%</div>
+            <p>Reducción de gastos personales reportados.</p>
+          </article>
+          <article class="card">
+            <div class="kpi">3.1h</div>
+            <p>Promedio de ayuda recibida por persona/mes.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="historias">
+      <div class="wrapper">
+        <h2>Historias reales</h2>
+        <p class="sub">Intercambios que funcionan.</p>
+        <div class="testis">
+          <blockquote>
+            “Aprendí guitarra y a cambio di un taller de empanadas. Mi tiempo vale, el tuyo también.”
+            <footer>— Sofía, 28</footer>
+          </blockquote>
+          <blockquote>
+            “Me arreglaron la compu; yo cuidé un perro una tarde. Simple y parejo.”
+            <footer>— Luis, 52</footer>
+          </blockquote>
+        </div>
+      </div>
+    </section>
+
+    <section id="cta" class="cta">
+      <div class="wrapper cta">
+        <h2>Empezá hoy a intercambiar horas</h2>
+        <p class="note">100% gratis · 100% comunitario</p>
+        <div class="cta-row">
+          <a class="btn" href="/register.html">Unite ahora</a>
+          <a class="btn secondary" href="/login.html">Ya tengo cuenta</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="wrapper">
+        <h2>Preguntas frecuentes</h2>
+        <div class="faq">
+          <details>
+            <summary>¿De verdad no se usa dinero?</summary>
+            <p>Sí. Acá la moneda es tu tiempo. Ofrecés horas, recibís horas. Fin.</p>
+          </details>
+          <details>
+            <summary>¿Todas las horas valen lo mismo?</summary>
+            <p>Sí. No importa si enseñás programación o cuidás plantas: una hora es una hora.</p>
+          </details>
+          <details>
+            <summary>¿Cómo se evita el abuso?</summary>
+            <p>Calificaciones mutuas, reglas claras y moderación comunitaria. Cuidamos la confianza, no el cuento.</p>
+          </details>
+          <details>
+            <summary>¿Necesito estar en un barrio específico?</summary>
+            <p>Podés sumarte desde donde estés. Empezamos en barrios del sur y vamos expandiendo.</p>
+          </details>
+        </div>
+      </div>
     </section>
   </main>
 
-  <!-- Punto de entrada -->
-  <script type="module" src="./src/index.js"></script>
+  <footer>
+    <div class="wrapper grid">
+      <small>© <span id="y"></span> Banco de Tiempo · Hecho por la comunidad</small>
+      <nav aria-label="Legal y enlaces">
+        <a href="#top">Sobre nosotros</a>
+        <a href="#faq">FAQ</a>
+        <a href="#cta">Contacto</a>
+      </nav>
+    </div>
+  </footer>
+
   <script>
-    // Toggle de pestañas básico
-    const tabL = document.getElementById('tabLogin');
-    const tabS = document.getElementById('tabSignup');
-    const paneL = document.getElementById('paneLogin');
-    const paneS = document.getElementById('paneSignup');
-    function show(which){
-      const login = which === 'login';
-      tabL.classList.toggle('is-active', login);
-      tabS.classList.toggle('is-active', !login);
-      paneL.classList.toggle('hidden', !login);
-      paneS.classList.toggle('hidden', login);
-      tabL.setAttribute('aria-selected', String(login));
-      tabS.setAttribute('aria-selected', String(!login));
-    }
-    tabL?.addEventListener('click', () => show('login'));
-    tabS?.addEventListener('click', () => show('signup'));
+    // Año dinámico
+    document.getElementById('y').textContent = new Date().getFullYear();
+
+    // Smooth scroll (nativo soportado por CSS en muchos navegadores, fallback simple)
+    document.querySelectorAll('a[href^="#"]').forEach(a=>{
+      a.addEventListener('click', e=>{
+        const id = a.getAttribute('href');
+        if(id.length > 1){
+          e.preventDefault();
+          document.querySelector(id)?.scrollIntoView({behavior:'smooth'});
+        }
+      });
+    });
+
+    // Mobile menu toggle
+    const header = document.querySelector('header');
+    const btn = document.getElementById('mobileToggle');
+    btn?.addEventListener('click', ()=>{
+      const open = header.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
+    // Mini-telemetría DIY (no envía datos reales, sólo ejemplo de hook)
+    document.querySelectorAll('[data-track]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        // Colocar aquí analytics reales si los necesitás.
+        console.debug('track', el.getAttribute('data-track'))
+      })
+    })
   </script>
 </body>
 </html>

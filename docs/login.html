@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Banco de Tiempo — Ingresar / Crear cuenta</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main>
+    <h1>⏳ Banco de Tiempo</h1>
+
+    <!-- Tabs Login / Registro -->
+    <div class="tabs" role="tablist" aria-label="Auth">
+      <button id="tabLogin"  class="is-active" role="tab" aria-selected="true"  aria-controls="paneLogin">Ingresar</button>
+      <button id="tabSignup" role="tab" aria-selected="false" aria-controls="paneSignup">Crear cuenta</button>
+    </div>
+
+    <!-- LOGIN -->
+    <section id="paneLogin" class="card" role="tabpanel" aria-labelledby="tabLogin">
+      <form id="loginForm" autocomplete="on">
+        <input id="loginEmail" type="email" placeholder="Correo" required />
+        <input id="loginPassword" type="password" placeholder="Contraseña" required />
+        <button id="loginBtn" type="submit">Entrar</button>
+        <div id="msgLogin" class="muted"></div>
+      </form>
+    </section>
+
+    <!-- SIGNUP -->
+    <section id="paneSignup" class="card hidden" role="tabpanel" aria-labelledby="tabSignup">
+      <form id="signupForm" autocomplete="on">
+        <input id="signupDisplay" type="text" placeholder="Nombre visible" required />
+
+        <!-- 👇 nuevo: selector de barrio -->
+        <select id="signupHood" required>
+          <option value="">Elegí tu barrio</option>
+          <!-- Se llena desde src/index.js con la tabla hoods -->
+        </select>
+
+        <input id="signupEmail"   type="email" placeholder="Correo" required />
+        <input id="signupPassword" type="password" placeholder="Contraseña" required />
+        <button id="signupBtn" type="submit">Crear cuenta</button>
+        <div id="msgSignup" class="muted"></div>
+      </form>
+    </section>
+  </main>
+
+  <!-- Punto de entrada -->
+  <script type="module" src="./src/index.js"></script>
+  <script>
+    // Toggle de pestañas básico
+    const tabL = document.getElementById('tabLogin');
+    const tabS = document.getElementById('tabSignup');
+    const paneL = document.getElementById('paneLogin');
+    const paneS = document.getElementById('paneSignup');
+    function show(which){
+      const login = which === 'login';
+      tabL.classList.toggle('is-active', login);
+      tabS.classList.toggle('is-active', !login);
+      paneL.classList.toggle('hidden', !login);
+      paneS.classList.toggle('hidden', login);
+      tabL.setAttribute('aria-selected', String(login));
+      tabS.setAttribute('aria-selected', String(!login));
+    }
+    tabL?.addEventListener('click', () => show('login'));
+    tabS?.addEventListener('click', () => show('signup'));
+  </script>
+</body>
+</html>
