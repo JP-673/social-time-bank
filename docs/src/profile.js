@@ -1,15 +1,16 @@
 import { supabase } from './supabaseClient.js';
 
+// profile.js
 export async function getProfileWithHood() {
+  const { supabase } = await import('./supabaseClient.js');
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from('profiles')
     .select(`display_name, hood:hood_id ( name )`)
     .eq('id', user.id)
     .single();
-  if (error) return null;
-  return data; // { display_name, hood: { name } | null }
+  return data;
 }
 
 export async function listHoods() {
