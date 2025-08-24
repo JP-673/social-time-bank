@@ -1,4 +1,4 @@
-// /src/ui.js
+// /src/ui.js (parcheado)
 import { signIn, register, logout } from './auth.js';
 import * as Offers from './offers.js';
 import * as Exchanges from './exchanges.js';
@@ -6,39 +6,53 @@ import { getState, subscribe } from './state.js';
 import { renderWallet as renderWalletLegacy } from './wallet.js';
 
 export function bootUI() {
-  wireAuth();
-  wireTabs();
+  try {
+    wireAuth();
+    wireTabs();
 
-  // wire del botón "Publicar" (tab Crear oferta)
-  const $offerBtn = document.querySelector('#offerBtn');
-  if ($offerBtn) $offerBtn.addEventListener('click', onCreateOffer);
-
-  // Mostrar login o dashboard según sesión
-  subscribe(() => {
-    const { currentUser } = getState();
-
-    // bridge para wallet.js (usa window.state.me.id)
-    window.state = window.state || {};
-    window.state.me = currentUser ? { id: currentUser.id } : null;
-
-    const $form = document.querySelector('#loginForm');
-    const $dash = document.querySelector('#dashboard');
-    const $user = document.querySelector('#userName');
-
-    if ($user) $user.textContent = currentUser?.email ?? 'Invitado';
-    if ($form) $form.hidden = !!currentUser;
-    if ($dash) $dash.hidden = !currentUser;
-
-    if (currentUser && !document.body.dataset.dashBooted) {
-      document.body.dataset.dashBooted = '1';
-      showTab('active');
+    const $offerBtn = document.querySelector('#offerBtn');
+    if ($offerBtn) {
+      $offerBtn.addEventListener('click', onCreateOffer);
+    } else {
+      console.debug('[ui] #offerBtn no está presente (tab crear oferta ausente en este HTML)');
     }
-  });
+
+    // Mostrar login o dashboard según sesión
+    subscribe(() => {
+      const { currentUser } = getState();
+
+      // bridge para wallet.js (usa window.state.me.id)
+      window.state = window.state || {};
+      window.state.me = currentUser ? { id: currentUser.id } : null;
+
+      const $form = document.querySelector('#loginForm');
+      const $dash = document.querySelector('#dashboard');
+      const $user = document.querySelector('#userName');
+
+      if ($user) $user.textContent = currentUser?.email ?? 'Invitado';
+      if ($form) $form.hidden = !!currentUser;
+      if ($dash) $dash.hidden = !currentUser;
+
+      if (currentUser && !document.body.dataset.dashBooted) {
+        document.body.dataset.dashBooted = '1';
+        // si no existe 'active', cae al primer pane disponible
+        showTab('active');
+      }
+    });
+  } catch (e) {
+    console.error('[ui] bootUI error', e);
+    toast('Error inicializando UI');
+  }
 }
 
 /* Tabs */
 function wireTabs() {
-  document.querySelectorAll('.tabs .tab').forEach(btn => {
+  const tabs = document.querySelectorAll('.tabs .tab');
+  if (!tabs.length) {
+    console.debug('[ui] No hay .tabs .tab en este HTML (ok si no usás tabs aquí)');
+    return;
+  }
+  tabs.forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tabs .tab').forEach(b => b.classList.remove('is-active'));
       btn.classList.add('is-active');
@@ -48,25 +62,51 @@ function wireTabs() {
 }
 
 async function showTab(name) {
-  const panes = {
-    active:    document.querySelector('#pane-active'),
-    mine:      document.querySelector('#pane-mine'),
-    exchanges: document.querySelector('#pane-exchanges'),
-    create:    document.querySelector('#pane-create'),
-    wallet:    document.querySelector('#pane-wallet'),
-    orders:    document.querySelector('#pane-orders'),
-  };
+  // Mapeo panes existentes (no asumir que están todos)
+  const PANE_IDS = [
+    ['active',    '#pane-active'],
+    ['mine',      '#pane-mine'],
+    ['exchanges', '#pane-exchanges'],
+    ['create',    '#pane-create'],
+    ['wallet',    '#pane-wallet'],
+    ['orders',    '#pane-orders'],
+  ];
+
+  const panes = Object.fromEntries(
+    PANE_IDS.map(([key, sel]) => [key, document.querySelector(sel)])
+  );
+
+  // ocultar los que existan
   Object.values(panes).forEach(p => p && (p.hidden = true));
-  const pane = panes[name];
-  if (!pane) return;
 
-  if (name === 'active')         await renderActiveOffers(pane);
-  else if (name === 'mine')      await renderMyOffers(pane);
-  else if (name === 'exchanges') await renderMyExchanges(pane);
-  else if (name === 'wallet')    await renderWalletLegacy();
-  else if (name === 'orders')    await renderOrders(pane);
+  // elegir pane
+  let pane = panes[name];
+  if (!pane) {
+    // fallback: primer pane realmente presente
+    const firstAvailable = PANE_IDS.find(([key]) => panes[key]);
+    if (!firstAvailable) {
+      console.debug('[ui] No hay panes para mostrar.');
+      return;
+    }
+    name = firstAvailable[0];
+    pane = panes[name];
+    console.debug(`[ui] Pane "${name}" seleccionado como fallback`);
+  }
 
-  pane.hidden = false;
+  try {
+    if (name === 'active')         await renderActiveOffers(pane);
+    else if (name === 'mine')      await renderMyOffers(pane);
+    else if (name === 'exchanges') await renderMyExchanges(pane);
+    else if (name === 'wallet')    await renderWalletLegacy();
+    else if (name === 'orders')    await renderOrders(pane);
+    else if (name === 'create')    { /* solo mostrar el formulario */ }
+
+    pane.hidden = false;
+  } catch (e) {
+    console.error(`[ui] showTab(${name}) error`, e);
+    pane.innerHTML = `<p>Error cargando pestaña: ${esc(msg(e))}</p>`;
+    pane.hidden = false;
+  }
 }
 
 /* Renderers */
@@ -74,7 +114,7 @@ async function renderActiveOffers(pane) {
   pane.innerHTML = 'Cargando…';
   try {
     const rows = await Offers.getOffers({});
-    const open = rows.filter(r => r.status === 'open');
+    const open = Array.isArray(rows) ? rows.filter(r => r.status === 'open') : [];
     if (!open.length) { pane.innerHTML = '<p>No hay ofertas abiertas.</p>'; return; }
 
     pane.innerHTML = `<div class="grid cols-2"></div>`;
@@ -99,7 +139,6 @@ async function renderActiveOffers(pane) {
       `));
     }
 
-    // handler para tomar
     grid.querySelectorAll('button.take').forEach(btn => {
       btn.addEventListener('click', async () => {
         try {
@@ -110,7 +149,6 @@ async function renderActiveOffers(pane) {
       });
     });
 
-    // handler para cerrar (usa Offers.closeOffer del módulo offers.js)
     grid.querySelectorAll('button.close-offer').forEach(btn => {
       btn.addEventListener('click', async () => {
         const reason = prompt('Motivo para cerrar (opcional)') || null;
@@ -123,6 +161,7 @@ async function renderActiveOffers(pane) {
     });
 
   } catch (e) {
+    console.error('[ui] renderActiveOffers error', e);
     pane.innerHTML = `<p>Error: ${esc(msg(e))}</p>`;
   }
 }
@@ -131,8 +170,9 @@ async function renderMyOffers(pane) {
   const me = getState().currentUser;
   pane.innerHTML = 'Cargando…';
   try {
+    if (!me?.id) { pane.innerHTML = '<p>Sesión no disponible.</p>'; return; }
     const rows = await Offers.getOffers({ ownerId: me.id });
-    if (!rows.length) { pane.innerHTML = '<p>Todavía no creaste ofertas.</p>'; return; }
+    if (!rows?.length) { pane.innerHTML = '<p>Todavía no creaste ofertas.</p>'; return; }
     pane.innerHTML = `<div class="grid cols-2"></div>`;
     const grid = pane.querySelector('.grid');
     for (const off of rows) {
@@ -156,14 +196,17 @@ async function renderMyOffers(pane) {
         } catch (e) { toast(msg(e)); }
       });
     });
-  } catch (e) { pane.innerHTML = `<p>Error: ${esc(msg(e))}</p>`; }
+  } catch (e) {
+    console.error('[ui] renderMyOffers error', e);
+    pane.innerHTML = `<p>Error: ${esc(msg(e))}</p>`;
+  }
 }
 
 async function renderMyExchanges(pane) {
   pane.innerHTML = 'Cargando…';
   try {
     const rows = await Exchanges.getMyExchanges({});
-    if (!rows.length) { pane.innerHTML = '<p>Sin intercambios por ahora.</p>'; return; }
+    if (!rows?.length) { pane.innerHTML = '<p>Sin intercambios por ahora.</p>'; return; }
     pane.innerHTML = `<div class="grid"></div>`;
     const grid = pane.querySelector('.grid');
     for (const x of rows) {
@@ -175,13 +218,16 @@ async function renderMyExchanges(pane) {
         </article>
       `));
     }
-  } catch (e) { pane.innerHTML = `<p>Error: ${esc(msg(e))}</p>`; }
+  } catch (e) {
+    console.error('[ui] renderMyExchanges error', e);
+    pane.innerHTML = `<p>Error: ${esc(msg(e))}</p>`;
+  }
 }
 
 async function renderOrders(pane) {
   pane.innerHTML = 'Cargando…';
   try {
-    const rows = await Exchanges.getMyExchanges({});
+    const rows = await Exchanges.getMyExchanges({}) || [];
     if (!rows.length) { pane.innerHTML = '<p>No tenés órdenes por ahora.</p>'; return; }
 
     const rank = { pending:1, accepted:2, completed:3, cancelled:4, no_show:5 };
@@ -250,6 +296,7 @@ async function renderOrders(pane) {
     });
 
   } catch (e) {
+    console.error('[ui] renderOrders error', e);
     pane.innerHTML = `<p>Error: ${esc(msg(e))}</p>`;
   }
 }
@@ -310,3 +357,4 @@ function el(str){ const t=document.createElement('template'); t.innerHTML=str.tr
 function esc(s){ return String(s).replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function msg(e){ return e?.message ?? String(e); }
 function toast(txt){ const t=document.querySelector('#toast'); if(!t) return; t.textContent=String(txt); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1600); }
+// --- fin src/ui.js ---
