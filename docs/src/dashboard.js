@@ -8,13 +8,12 @@ import { getBalance, getLedger } from './wallet.js';
 // >>> CHAT
 import * as Chat from './chat.js';                  // list/send/subscribe/...
 import { getProfileById, getProfilesBulk, displayName } from './profile.js';
-
 // <<< CHAT
 
 // -------- utils --------
 const $ = (idA, idB = null) =>
   document.getElementById(idA) || (idB ? document.getElementById(idB) : null);
-const gotoLanding = () => location.replace('index.html');
+const gotoLanding = () => location.replace('entrar.html'); // ← ahora va al login
 const escapeHtml = (s = '') =>
   s.replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
 const fmtH = (mins = 0) => (mins / 60).toFixed(2) + ' h';
@@ -39,8 +38,8 @@ async function renderSidebarProfile(user) {
   try {
     const balMin = await getBalance(user.id);             // minutos
     const balHrs = (balMin ?? 0) / 60;
-    const balFmt = balHrs % 1 === 0 ? balHrs.toFixed(0) : balHrs.toFixed(2); // solo número
-    if ($bal) $bal.textContent = balFmt;                  // el " h" lo pone el HTML
+    const balFmt = balHrs % 1 === 0 ? balHrs.toFixed(0) : balHrs.toFixed(2);
+    if ($bal) $bal.textContent = balFmt;
   } catch {
     if ($bal) $bal.textContent = 0;
   }
@@ -93,7 +92,7 @@ function wireQuickActions() {
 }
 
 // ===============================
-// CHAT: UI HELPERS (alias-only)
+// CHAT: UI HELPERS
 // ===============================
 let currentConversationId = null;
 let unsubscribeConv = null;
@@ -135,12 +134,11 @@ function scrollMessagesToEnd() {
 }
 
 async function loadConversationsList(meId) {
-  const list = await Chat.listConversationsWithProfiles(); // ya trae profile_a/b con display_name
+  const list = await Chat.listConversationsWithProfiles();
   $('chat-conversations').innerHTML = list.map(c => renderConversationItem(c, meId)).join('');
   document.querySelectorAll('.chat-conversations .item').forEach(el=>{
     el.addEventListener('click', () => openConversation(el.dataset.cid));
   });
-  // unread badges
   for (const c of list) {
     const n = await Chat.countUnread(c.id);
     const spot = $(`unread-${c.id}`);
@@ -149,7 +147,7 @@ async function loadConversationsList(meId) {
 }
 
 async function openConversation(cid) {
-  const me = await getCurrentUser();
+  const me = await refreshUser();
   currentConversationId = cid;
 
   document.querySelectorAll('.chat-conversations .item').forEach(el=>{
@@ -158,7 +156,7 @@ async function openConversation(cid) {
 
   const msgs = await Chat.listMessages(cid);
   const senderIds = [...new Set(msgs.map(m=>m.sender_id))];
-  const profs = await Promise.all(senderIds.map(id => getProfile(id)));
+  const profs = await getProfilesBulk(senderIds);
   const pmap = new Map(profs.filter(Boolean).map(p => [p.id, p]));
 
   $('chat-messages').innerHTML =
@@ -168,7 +166,7 @@ async function openConversation(cid) {
 
   if (unsubscribeConv) unsubscribeConv();
   unsubscribeConv = Chat.subscribeConversation(cid, async (newMsg) => {
-    const sp = pmap.get(newMsg.sender_id) || await getProfile(newMsg.sender_id);
+    const sp = pmap.get(newMsg.sender_id) || await getProfileById(newMsg.sender_id);
     $('chat-messages')
       .insertAdjacentHTML('beforeend', renderMessage(newMsg, me.id, sp));
     scrollMessagesToEnd();
@@ -194,14 +192,13 @@ function wireChatPanelChrome() {
 }
 
 async function bootChatUI() {
-  const me = await getCurrentUser();
-  if (!$('chat-panel')) return;         // si el HTML no tiene el panel, no hacemos nada
+  const me = await refreshUser();
+  if (!$('chat-panel')) return;
   await loadConversationsList(me.id);
   wireChatForm();
   wireChatPanelChrome();
 }
 
-// Permite abrir chat desde cualquier botón .btn.chat con data-offer-id y data-user-id
 function wireGlobalContactButtons() {
   document.addEventListener('click', async (e) => {
     const btn = e.target.closest('button.btn.chat, a.btn.chat');
@@ -211,9 +208,8 @@ function wireGlobalContactButtons() {
     if (!otherUserId) return;
 
     showChatPanel();
-    // crea/obtiene conversación y la abre
     const cid = await Chat.getOrCreateConversation({ offerId, otherUserId });
-    const me = await getCurrentUser();
+    const me = await refreshUser();
     await loadConversationsList(me.id);
     await openConversation(cid);
   });
@@ -239,10 +235,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   const user = await guard();
   if (!user) return;
 
-  // UI general
   bootUI();
 
-  // CHAT
   await bootChatUI();
   wireGlobalContactButtons();
 });
