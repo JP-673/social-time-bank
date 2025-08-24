@@ -172,3 +172,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     $$('.btn[href$=\"/login.html\"], .btn[href=\"/register.html\"]').forEach(a => a.setAttribute('href','login.html'));
   }
 });
+
+/** Redirige siempre a /dashboard.html respetando subcarpetas (GH Pages). */
+function buildRedirect() {
+  // location.pathname = /social-time-bank/login.html  (o /entrar.html)
+  const base = location.pathname.replace(/(?:index|entrar|login)\.html?$/i, '');
+  return `${location.origin}${base}dashboard.html`;
+}
