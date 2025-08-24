@@ -170,3 +170,51 @@ input:focus, textarea:focus, select:focus{ box-shadow:0 0 0 2px #2b7cff55; }
 #chat-form{display:flex;gap:8px;padding:10px;border-top:1px solid #222}
 #chat-input{flex:1;background:#171a21;border:1px solid #222;border-radius:10px;padding:8px 10px;color:#eee}
 .btn{background:#5865f2;border:0;color:white;padding:8px 12px;border-radius:10px}
+
+
+/* ===== BOTONES ===== */
+
+.btn {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  border: 1px solid transparent;
+  user-select: none;
+}
+
+/* Botón primario (acciones principales: ingresar, registrar, publicar…) */
+.btn.primary {
+  background: #3b82f6;        /* azul tailwind-ish */
+  border-color: #3b82f6;
+  color: white;
+}
+
+.btn.primary:hover {
+  background: #2563eb;        /* un poco más oscuro al hover */
+  border-color: #2563eb;
+}
+
+/* Botón fantasma (Salir, Cancelar, etc.) */
+.btn.ghost {
+  background: transparent;
+  border: 1px solid #666;
+  color: #ccc;
+}
+
+.btn.ghost:hover {
+  border-color: #aaa;
+  color: #fff;
+  background: rgba(255,255,255,0.05);
+}
+
+/* Botón pequeño (por ej. en órdenes) */
+.btn.sm {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  border-radius: 4px;
+}
