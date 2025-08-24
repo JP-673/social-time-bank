@@ -24,7 +24,6 @@ export async function acceptExchange(exchangeId) {
   return data;
 }
 
-// exchanges.js
 export async function completeExchange(exchangeId) {
   const { data, error } = await supabase
     .rpc('settle_exchange', { p_exchange_id: exchangeId });
@@ -66,45 +65,20 @@ export async function markNoShow(exchangeId, againstUserId) {
  * IMPORTANTE: si el nombre de tus constraints difiere, ajustá los sufijos !exchanges_*_fkey.
  * Si no querés depender del nombre de la FK, usá la versión fallback comentada abajo.
  */
-export async function getMyExchanges({ limit = 50 } = {}) {
-  const user = getState().currentUser;
-  if (!user) throw new Error('Necesitás iniciar sesión.');
+// exchanges.js
+
+
+export async function getMyExchanges() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return []; // 👈 evita romper la UI si la sesión aún no se hidrató
 
   const { data, error } = await supabase
-    .from(TABLE)
-    .select(`
-      *,
-      offers(*),
-      requester:profiles!exchanges_requester_id_fkey ( id, display_name ),
-      provider:profiles!exchanges_provider_id_fkey  ( id, display_name )
-    `)
-    .or(`requester_id.eq.${user.id},provider_id.eq.${user.id}`)
-    .order('created_at', { ascending: false })
-    .limit(limit);
+    .from('exchanges')
+    .select(`id, status, minutes, provider_id, requester_id,
+             offers:offer_id ( id, title, duration_minutes )`)
+    .or(`provider_id.eq.${user.id},requester_id.eq.${user.id}`)
+    .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data;
+  return data || [];
 }
-
-/*  🔁 Fallback si no conocés los nombres exactos de las FK:
-export async function getMyExchanges({ limit = 50 } = {}) {
-  const user = getState().currentUser;
-  if (!user) throw new Error('Necesitás iniciar sesión.');
-
-  const { data, error } = await supabase
-    .from(TABLE)
-    .select(`
-      *,
-      offers(*),
-      req:profiles ( id, display_name ),
-      prov:profiles!exchanges_provider_id_fkey ( id, display_name )
-    `)
-    .or(`requester_id.eq.${user.id},provider_id.eq.${user.id}`)
-    .order('created_at', { ascending: false })
-    .limit(limit);
-
-  if (error) throw error;
-  // accederías como row.req / row.prov (o req/prov podrían venir null según el join implícito)
-  return data;
-}
-*/

@@ -1,25 +1,42 @@
 // docs/src/dashboard.js
-import { supabase } from './supabaseClient.js';
 import { getCurrentUser } from './auth.js';
 import * as Profile from './profile.js';
 import * as Offers from './offers.js';
 import * as Exchanges from './exchanges.js';
 import { getBalance, getLedger } from './wallet.js';
 
-// util chico
-const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-const fmtH = mins => ((mins ?? 0)/60).toFixed(2);
+let _meId = null;
+
+// --- utils ---
+const esc  = s => String(s ?? '').replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const fmtH = mins => ((mins ?? 0) / 60).toFixed(2);
+
+// espera hasta maxMs a que exista un user.id (hidratación de supabase)
+async function meIdWait(maxMs = 2500) {
+  if (_meId) return _meId;
+  const t0 = performance.now();
+  let u = await getCurrentUser();
+  while (!u && performance.now() - t0 < maxMs) {
+    await new Promise(r => setTimeout(r, 100));
+    u = await getCurrentUser();
+  }
+  _meId = u?.id || null;
+  return _meId;
+}
 
 export async function initDashboard() {
-  // pinta header (nombre, barrio, saldo)
   const user = await getCurrentUser();
-  if (!user) return; // controls.js se encarga de redirigir si no hay sesión
+  if (!user) return;        // controls.js decide si redirige
+  _meId = user.id;          // cachea para los renders
 
+  // Perfil + barrio
   try {
-    const prof = await Profile.getProfileWithHood(); // { id, display_name, hood:{name} }
+    const prof = await Profile.getProfileWithHood(); // { display_name, hood:{name} }
     document.getElementById('sbUserName')?.replaceChildren(document.createTextNode(prof?.display_name || user.email));
     document.getElementById('sbUserHood')?.replaceChildren(document.createTextNode(prof?.hood?.name ? `(${prof.hood.name})` : ''));
   } catch {}
+
+  // Saldos
   try {
     const balMin = await getBalance(user.id);
     document.getElementById('sbHdrBalance')?.replaceChildren(document.createTextNode(String(fmtH(balMin))));
@@ -27,20 +44,22 @@ export async function initDashboard() {
   } catch {
     document.getElementById('sbHdrBalance')?.replaceChildren(document.createTextNode('0'));
   }
-  // mini ledger
+
+  // Mini ledger
   try {
     const ledger = await getLedger(user.id);
     const wrap = document.getElementById('miniLedger');
     if (wrap) {
       wrap.innerHTML = ledger?.length
-        ? ledger.slice(0,6).map(tx => `
+        ? ledger.slice(0, 6).map(tx => `
             <div class="tx">
               <div>
                 <div>${esc(tx.note ?? '—')}</div>
                 <small class="muted">${esc(tx.when ?? '')}</small>
               </div>
-              <strong>${tx.delta>0?'+':''}${fmtH(tx.delta)} h</strong>
-            </div>`).join('')
+              <strong>${tx.delta > 0 ? '+' : ''}${fmtH(tx.delta)} h</strong>
+            </div>
+          `).join('')
         : '<p class="muted">Sin movimientos.</p>';
     }
   } catch {
@@ -48,7 +67,7 @@ export async function initDashboard() {
     if (wrap) wrap.innerHTML = '<p class="muted">No se pudo cargar.</p>';
   }
 
-  // muestra tab inicial (no agrega listeners)
+  // Tab inicial
   await showTab('active');
 }
 
@@ -67,12 +86,12 @@ export async function showTab(name) {
   if (!target) return;
 
   try {
-    if (name === 'active')        await renderActiveOffers(target);
-    else if (name === 'mine')     await renderMyOffers(target);
-    else if (name === 'exchanges')await renderMyExchanges(target);
-    else if (name === 'orders')   await renderOrders(target);
-    else if (name === 'wallet')   await renderWallet(target);
-    // 'create' no requiere fetch
+    if (name === 'active')         await renderActiveOffers(target);
+    else if (name === 'mine')      await renderMyOffers(target);
+    else if (name === 'exchanges') await renderMyExchanges(target);
+    else if (name === 'orders')    await renderOrders(target);
+    else if (name === 'wallet')    await renderWallet(target);
+    // 'create' solo muestra el form estático
   } catch (e) {
     console.error('[dashboard] showTab error', e);
     target.innerHTML = `<p>Error: ${esc(e?.message || e)}</p>`;
@@ -84,8 +103,8 @@ export async function showTab(name) {
 
 async function renderActiveOffers(pane) {
   pane.innerHTML = 'Cargando…';
-  const rows = await Offers.getOffers({});          // ajusta tu getOffers
-  const open = (rows||[]).filter(r => r.status === 'open');
+  const rows = await Offers.getOffers({}).catch(() => []);
+  const open = (rows || []).filter(r => r.status === 'open');
 
   if (!open.length) { pane.innerHTML = '<p class="muted">No hay ofertas abiertas.</p>'; return; }
 
@@ -93,7 +112,7 @@ async function renderActiveOffers(pane) {
   const grid = pane.querySelector('.grid');
 
   for (const o of open) {
-    const author = o.author?.display_name || o.owner_id?.slice(0,8) || '—';
+    const author = o.author?.display_name || o.owner_id?.slice(0, 8) || '—';
     grid.insertAdjacentHTML('beforeend', `
       <article class="offer">
         <header><strong>${esc(o.title)}</strong> · <small>${o.duration_minutes ?? 0} min</small></header>
@@ -102,16 +121,17 @@ async function renderActiveOffers(pane) {
           <small>${esc(author)}</small>
           <button class="btn take" data-offer-id="${o.id}" data-owner-id="${o.owner_id}" type="button">Tomar</button>
         </footer>
-      </article>`);
+      </article>
+    `);
   }
 }
 
 async function renderMyOffers(pane) {
   pane.innerHTML = 'Cargando…';
-  const me = (await getCurrentUser())?.id;
-  if (!me) { pane.innerHTML = '<p>Sin sesión.</p>'; return; }
+  const me = await meIdWait();
+  if (!me) { pane.innerHTML = '<p class="muted">Preparando sesión…</p>'; return; }
 
-  const rows = await Offers.getOffers({ ownerId: me });
+  const rows = await Offers.getOffers({ ownerId: me }).catch(() => []);
   if (!rows?.length) { pane.innerHTML = '<p>Todavía no creaste ofertas.</p>'; return; }
 
   pane.innerHTML = `<div class="grid cols-2"></div>`;
@@ -123,13 +143,17 @@ async function renderMyOffers(pane) {
         <header><strong>${esc(o.title)}</strong> · <small>${o.duration_minutes ?? 0} min</small> · <em>${esc(o.status)}</em></header>
         <p>${esc(o.description ?? '')}</p>
         ${canClose ? `<div class="end"><button class="btn ghost close-offer" data-offer-id="${o.id}" type="button">Cerrar</button></div>` : ''}
-      </article>`);
+      </article>
+    `);
   }
 }
 
 async function renderMyExchanges(pane) {
   pane.innerHTML = 'Cargando…';
-  const rows = await Exchanges.getMyExchanges({});
+  const me = await meIdWait();
+  if (!me) { pane.innerHTML = '<p class="muted">Preparando sesión…</p>'; return; }
+
+  const rows = await Exchanges.getMyExchanges({}).catch(() => []);
   if (!rows?.length) { pane.innerHTML = '<p class="muted">Sin intercambios por ahora.</p>'; return; }
 
   pane.innerHTML = `<div class="list"></div>`;
@@ -140,13 +164,17 @@ async function renderMyExchanges(pane) {
       <article class="xchg">
         <header><strong>${esc(x?.offers?.title ?? '(sin título)')}</strong> · <small>${x.minutes ?? x?.offers?.duration_minutes ?? 0} min</small></header>
         <p>Estado: <em>${esc(x.status)}</em></p>
-      </article>`);
+      </article>
+    `);
   }
 }
 
 async function renderOrders(pane) {
   pane.innerHTML = 'Cargando…';
-  const rows = await Exchanges.getMyExchanges({}) || [];
+  const me = await meIdWait();
+  if (!me) { pane.innerHTML = '<p class="muted">Preparando sesión…</p>'; return; }
+
+  const rows = await Exchanges.getMyExchanges({}).catch(() => []) || [];
   if (!rows.length) { pane.innerHTML = '<p>No tenés órdenes por ahora.</p>'; return; }
 
   pane.innerHTML = `<div class="list"></div>`;
@@ -154,10 +182,12 @@ async function renderOrders(pane) {
 
   for (const x of rows) {
     const actions = [];
-    if (x.status === 'pending') actions.push('accept','cancel');
+    if (x.status === 'pending')  actions.push('accept','cancel');
     if (x.status === 'accepted') actions.push('complete','cancel','noshow');
 
-    const buttons = actions.map(a => `<button class="btn sm" data-action="${a}" data-id="${x.id}" ${a==='noshow' ? `data-against="${x.requester_id || x.provider_id}"`:''} type="button">${a}</button>`).join(' ');
+    const buttons = actions.map(a =>
+      `<button class="btn sm" data-action="${a}" data-id="${x.id}" ${a==='noshow' ? `data-against="${x.requester_id || x.provider_id}"` : ''} type="button">${a}</button>`
+    ).join(' ');
 
     list.insertAdjacentHTML('beforeend', `
       <article class="xchg">
@@ -166,11 +196,12 @@ async function renderOrders(pane) {
           <em>${esc(x.status)}</em>
         </header>
         <div class="row end">${buttons}</div>
-      </article>`);
+      </article>
+    `);
   }
 }
 
 async function renderWallet(pane) {
-  // ya pintamos saldo arriba; acá podrías listar movimientos completos
+  // ya pintamos saldo arriba; aquí podrías listar el ledger completo
   pane.querySelector('#ledgerList')?.replaceChildren(document.createTextNode('Pronto…'));
 }
