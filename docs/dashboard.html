@@ -92,6 +92,28 @@
 
   <div id="toast" aria-live="polite"></div>
 
+
+<aside id="chat-panel" class="chat-panel hidden">
+  <header class="chat-header">
+    <h3>Mensajes</h3>
+    <button id="close-chat">×</button>
+  </header>
+
+  <section class="chat-layout">
+    <div class="chat-conversations" id="chat-conversations"></div>
+
+    <div class="chat-thread">
+      <div id="chat-messages" class="chat-messages"></div>
+      <form id="chat-form" autocomplete="off">
+        <input id="chat-input" type="text" placeholder="Escribe un mensaje..." maxlength="4000" required />
+        <button class="btn" type="submit">Enviar</button>
+      </form>
+    </div>
+  </section>
+</aside>
+
+
+
   <!-- ENTRY POINT del dashboard -->
   <script type="module" src="./src/dashboard.js"></script>
 </body>
