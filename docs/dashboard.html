@@ -30,35 +30,28 @@
 
   <main class="layout">
     <!-- Sidebar -->
-    <aside class="sidebar card">
-      <div class="profile-block">
-        <div class="brand small">
-          <span class="logo">⏳</span>
-          <strong>Banco de Tiempo</strong>
-        </div>
+<aside class="sidebar card">
+  <div class="who">
+    <strong id="userName">—</strong>
+    <small id="userHood" class="muted"></small>
+  </div>
 
-        <div class="who">
-          <strong id="userName">—</strong>
-          <small id="userHood" class="muted"></small>
-        </div>
+  <div class="balance-row">
+    <span class="chip"><span id="hdrBalance">0</span> h</span>
+    <button id="logoutBtn" class="btn ghost" type="button">Salir</button>
+  </div>
 
-        <div class="balance-row">
-          <span class="chip"><span id="hdrBalance">0</span> h</span>
-          <button id="logoutBtn" class="btn ghost" type="button">Salir</button>
-        </div>
-      </div>
+  <div class="quick-actions">
+    <button class="btn primary block" data-tab="create">➕ Nueva oferta</button>
+    <button class="btn block" data-tab="mine">📦 Mis ofertas</button>
+    <button class="btn block" data-tab="wallet">💳 Billetera</button>
+  </div>
 
-      <div class="quick-actions">
-        <button class="btn primary block" data-tab="create">➕ Nueva oferta</button>
-        <button class="btn block" data-tab="mine">📦 Mis ofertas</button>
-        <button class="btn block" data-tab="wallet">💳 Billetera</button>
-      </div>
-
-      <div class="mini-ledger">
-        <h4 class="muted">Movimientos</h4>
-        <div id="miniLedger" class="list"></div>
-      </div>
-    </aside>
+  <div class="mini-ledger">
+    <h4 class="muted">Movimientos</h4>
+    <div id="miniLedger" class="list"></div>
+  </div>
+</aside>
 
     <!-- Contenido principal -->
     <section class="content card">
