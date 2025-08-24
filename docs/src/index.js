@@ -29,7 +29,6 @@ function readInput(ids) {
 
 /** Wirea el login aunque cambien IDs (usa varias alternativas). */
 function wireLogin() {
-  // ⚠️ IMPORTANTE: no uses tu $ = getElementById para selectores CSS.
   const form =
     document.querySelector('#loginForm') ||
     document.querySelector('[data-role="login-form"]') ||
@@ -55,10 +54,11 @@ function wireLogin() {
     }
 
     try {
+      // Asegúrate de tener una función signIn que devuelva { error }
       const { error } = await signIn(email, pass);
       if (error) throw error;
 
-      // Redirect to dashboard after successful login
+      // Redirige al dashboard después de login exitoso
       window.location.replace(buildRedirect());
     } catch (err) {
       showMsg('msgLogin', err?.message || 'No se pudo iniciar sesión.');
