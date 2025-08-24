@@ -84,11 +84,20 @@ async function renderMiniLedger(user) {
 // ===============================
 function wireSidebarLogout() {
   const btn = $('sbLogoutBtn', 'logoutBtn');
-  btn?.addEventListener('click', async () => {
-    await logout();
-    setState({ currentUser: null });
-    gotoLanding();
-  }, { once: true });
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    try {
+      await logout();                         // revoca sesión en supabase
+      Object.keys(localStorage).forEach(k => { // borra residuos
+        if (k.startsWith('sb-')) localStorage.removeItem(k);
+      });
+      setState({ currentUser: null });
+      gotoLanding();                          // te manda a login.html
+    } catch (e) {
+      console.error('Logout error', e);
+      alert('No se pudo cerrar sesión');
+    }
+  });
 }
 
 function wireQuickActions() {
