@@ -27,7 +27,10 @@ function wireLogin() {
     document.querySelector('form#entrar') ||
     document.querySelector('form'); // último recurso
 
-  if (!form) return;
+  if (!form) {
+    console.warn('No se encontró el formulario de login.');
+    return;
+  }
   try { form.setAttribute('action', '#'); } catch {}
 
   form.addEventListener('submit', async (e) => {
@@ -43,7 +46,11 @@ function wireLogin() {
       console.log('Intentando login con:', email);
       const { error } = await signIn(email, pass);
       console.log('Resultado de signIn:', error);
-      if (error) throw error;
+      if (error) {
+        showMsg('msgLogin', error.message || 'No se pudo iniciar sesión.');
+        return;
+      }
+      showMsg('msgLogin', '¡Login exitoso! Redirigiendo...');
       console.log('Login OK, redirigiendo a:', buildRedirect());
       window.location.replace(buildRedirect());
     } catch (err) {
@@ -53,14 +60,10 @@ function wireLogin() {
   });
 }
 
-/* Llama a wireLogin al cargar */
-document.addEventListener('DOMContentLoaded', wireLogin);
-
 /* (Opcional) Si alguien ensució la URL con "?" vacío, limpiá. */
 if (location.search === '?') {
   history.replaceState({}, '', location.pathname);
 }
-
 
 /** Wirea el registro si existe (en mismo HTML o separado). */
 function wireRegister() {
@@ -125,7 +128,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Si ya está autenticado y estamos en landing o entrar → directo al dashboard
   const { pathname } = location;
-  const onEntrar = pathname.endsWith('/entrar.html') || pathname.endsWith('entrar.html');
+  const onEntrar = pathname.endsWith('/entrar.html') || pathname.endsWith('entrar.html') || pathname.endsWith('/login.html') || pathname.endsWith('login.html');
   const user = await refreshUser();
   console.log('User from refreshUser:', user, 'Path:', pathname);
   if (user && (onEntrar || pathname.endsWith('/index.html') || pathname.endsWith('/'))) {
@@ -137,12 +140,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Solo si existe UI de login/registro en esta página, lo wireamos
   if (onEntrar) {
     wireLogin();
-    await loadHoodsIntoSelect();
+    if (typeof loadHoodsIntoSelect === 'function') await loadHoodsIntoSelect();
     wireRegister();
   } else {
     // estás en la landing: los botones deberían apuntar a entrar.html
-    // (si querés, acá podrías forzar el href de CTA)
-    $$('.btn[href$=\"/login.html\"], .btn[href=\"/register.html\"]').forEach(a => a.setAttribute('href','login.html'));
+    $$('.btn[href$="/login.html"], .btn[href="/register.html"]').forEach(a => a.setAttribute('href','login.html'));
   }
 });
 
