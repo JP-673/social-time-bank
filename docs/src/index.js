@@ -29,12 +29,6 @@ function readInput(ids) {
   return '';
 }
 
-/** Muestra mensajes si existe el elemento. */
-function showMsg(id, t='') {
-  const el = document.getElementById(id);
-  if (el) el.textContent = t;
-}
-
 /** Wirea el login aunque cambien IDs (usa varias alternativas). */
 function wireLogin() {
   // ⚠️ IMPORTANTE: no uses tu $ = getElementById para selectores CSS.
