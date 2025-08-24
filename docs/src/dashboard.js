@@ -1,7 +1,7 @@
 // docs/src/dashboard.js
 import { listenAuth, refreshUser, logout } from './auth.js';
 import { bootUI } from './ui.js';
-import * as Profiles from './profiles.js';
+import * as Profiles from './profile.js';
 import { setState } from './state.js';
 
 function gotoLanding() { location.replace('index.html'); }
